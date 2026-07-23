@@ -1188,6 +1188,28 @@
 					"placeholderServerUrl": "https://ntfy.sh",
 					"optionTopic": "Topic",
 					"placeholderTopic": "checkmate-alerts"
+				},
+				"jasminSms": {
+					"title": "Jasmin SMS configuration",
+					"description": "Configure Jasmin's sendbatch API for SMS notifications.",
+					"optionSendbatchUrl": "Sendbatch URL",
+					"placeholderSendbatchUrl": "http://10.3.104.178:8080/secure/sendbatch",
+					"optionAuthorization": "Authorization header",
+					"placeholderAuthorization": "Basic enRsdTp6dGxw",
+					"optionFrom": "Sender",
+					"placeholderFrom": "260344",
+					"optionRecipients": "Recipient numbers",
+					"placeholderRecipients": "260950003956, 260950003935",
+					"optionAccountId": "Account ID",
+					"placeholderAccountId": "Optional, e.g. 344-test",
+					"optionReportId": "Report ID",
+					"placeholderReportId": "Optional, generated automatically when blank",
+					"optionDlrEnabled": "Enable delivery receipts",
+					"optionDlrMethod": "DLR method",
+					"optionDlrUrl": "DLR URL",
+					"placeholderDlrUrl": "http://10.3.104.178:8000/dlr/",
+					"optionDlrLevel": "DLR level",
+					"placeholderDlrLevel": "2"
 				}
 			},
 			"table": {

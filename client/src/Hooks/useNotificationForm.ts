@@ -86,6 +86,22 @@ function buildDefaults(data: Notification | null): NotificationFormData {
 			topic: data.topic || "",
 		};
 	}
+	if (data?.type === "jasmin_sms") {
+		return {
+			type: "jasmin_sms",
+			notificationName: data.notificationName || "",
+			address: data.address || "",
+			accessToken: data.accessToken || "",
+			phone: data.phone || "",
+			jasminFrom: data.jasminFrom || "",
+			jasminDlrEnabled: data.jasminDlrEnabled ?? false,
+			jasminDlrMethod: data.jasminDlrMethod || "POST",
+			jasminDlrUrl: data.jasminDlrUrl || "",
+			jasminDlrLevel: data.jasminDlrLevel ?? 2,
+			jasminAccountId: data.jasminAccountId || "",
+			jasminReportId: data.jasminReportId || "",
+		};
+	}
 	// Default: email (covers both data === null and data.type === "email")
 	return {
 		type: "email",

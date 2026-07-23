@@ -1,4 +1,5 @@
 import { Schema, model, type Types } from "mongoose";
+import { JasminDlrMethods } from "@/domain/notifications/notification.type.js";
 import type { Notification, NotificationChannel } from "@/domain/notifications/notification.type.js";
 
 interface NotificationDocument extends Omit<Notification, "id" | "userId" | "teamId" | "createdAt" | "updatedAt"> {
@@ -37,6 +38,7 @@ const NotificationSchema = new Schema<NotificationDocument>(
 				"pushover",
 				"twilio",
 				"ntfy",
+				"jasmin_sms",
 			] as NotificationChannel[],
 			required: true,
 		},
@@ -52,6 +54,13 @@ const NotificationSchema = new Schema<NotificationDocument>(
 		accountSid: { type: String },
 		twilioPhoneNumber: { type: String },
 		topic: { type: String },
+		jasminFrom: { type: String },
+		jasminDlrEnabled: { type: Boolean },
+		jasminDlrMethod: { type: String, enum: JasminDlrMethods },
+		jasminDlrUrl: { type: String },
+		jasminDlrLevel: { type: Number },
+		jasminAccountId: { type: String },
+		jasminReportId: { type: String },
 	},
 	{
 		timestamps: true,

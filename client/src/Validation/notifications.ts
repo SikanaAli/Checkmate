@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { JasminDlrMethods } from "@/Types/Notification";
 
 const baseSchema = z.object({
 	notificationName: z
@@ -76,18 +77,62 @@ const ntfySchema = baseSchema.extend({
 	topic: z.string().min(1, "Topic is required"),
 });
 
-export const notificationSchema = z.discriminatedUnion("type", [
-	emailSchema,
-	slackSchema,
-	discordSchema,
-	webhookSchema,
-	pagerDutySchema,
-	matrixSchema,
-	teamsSchema,
-	telegramSchema,
-	pushoverSchema,
-	twilioSchema,
-	ntfySchema,
-]);
+const jasminSmsSchema = baseSchema.extend({
+	type: z.literal("jasmin_sms"),
+	address: z.string().min(1, "Sendbatch URL is required").url("Please enter a valid URL"),
+	accessToken: z.string().min(1, "Authorization header is required"),
+	phone: z.string().min(1, "At least one recipient phone number is required"),
+	jasminFrom: z.string().min(1, "Sender is required"),
+	jasminDlrEnabled: z.boolean().optional(),
+	jasminDlrMethod: z.enum(JasminDlrMethods).optional(),
+	jasminDlrUrl: z
+		.union([z.string().url("Please enter a valid URL"), z.literal("")])
+		.optional(),
+	jasminDlrLevel: z.number().int().min(0).max(3).optional(),
+	jasminAccountId: z.string().optional(),
+	jasminReportId: z.string().optional(),
+});
+
+export const notificationSchema = z
+	.discriminatedUnion("type", [
+		emailSchema,
+		slackSchema,
+		discordSchema,
+		webhookSchema,
+		pagerDutySchema,
+		matrixSchema,
+		teamsSchema,
+		telegramSchema,
+		pushoverSchema,
+		twilioSchema,
+		ntfySchema,
+		jasminSmsSchema,
+	])
+	.superRefine((data, ctx) => {
+		if (data.type !== "jasmin_sms" || !data.jasminDlrEnabled) {
+			return;
+		}
+		if (!data.jasminDlrMethod) {
+			ctx.addIssue({
+				code: "custom",
+				message: "DLR method is required when DLR is enabled",
+				path: ["jasminDlrMethod"],
+			});
+		}
+		if (!data.jasminDlrUrl) {
+			ctx.addIssue({
+				code: "custom",
+				message: "DLR URL is required when DLR is enabled",
+				path: ["jasminDlrUrl"],
+			});
+		}
+		if (data.jasminDlrLevel === undefined) {
+			ctx.addIssue({
+				code: "custom",
+				message: "DLR level is required when DLR is enabled",
+				path: ["jasminDlrLevel"],
+			});
+		}
+	});
 
 export type NotificationFormData = z.infer<typeof notificationSchema>;

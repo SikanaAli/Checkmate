@@ -28,6 +28,13 @@ class MongoNotificationsRepository implements INotificationsRepository {
 			accountSid: doc.accountSid ?? undefined,
 			twilioPhoneNumber: doc.twilioPhoneNumber ?? undefined,
 			topic: doc.topic ?? undefined,
+			jasminFrom: doc.jasminFrom ?? undefined,
+			jasminDlrEnabled: doc.jasminDlrEnabled ?? undefined,
+			jasminDlrMethod: doc.jasminDlrMethod ?? undefined,
+			jasminDlrUrl: doc.jasminDlrUrl ?? undefined,
+			jasminDlrLevel: doc.jasminDlrLevel ?? undefined,
+			jasminAccountId: doc.jasminAccountId ?? undefined,
+			jasminReportId: doc.jasminReportId ?? undefined,
 			createdAt: toDateString(doc.createdAt),
 			updatedAt: toDateString(doc.updatedAt),
 		};

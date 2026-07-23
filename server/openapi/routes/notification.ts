@@ -2,7 +2,7 @@ import { z } from "zod";
 import { registry } from "../registry.js";
 import { bearer, json, okJson, okJsonNoData, okUnknown, standardErrors } from "../helpers.js";
 import {
-	createNotificationBodyValidation,
+	notificationBodyValidationOptions,
 	deleteNotificationParamValidation,
 	getNotificationByIdParamValidation,
 	editNotificationParamValidation,
@@ -12,7 +12,7 @@ import {
 const tags = ["notifications"];
 
 // OpenAPI metadata for each notification variant. Keyed by the discriminator
-// value in createNotificationBodyValidation; build fails loudly if a variant
+// value in notificationBodyValidationOptions; build fails loudly if a variant
 // in the validator has no entry here, which doubles as drift detection.
 const notificationVariantMeta: Record<string, { component: string; example: Record<string, unknown> }> = {
 	email: {
@@ -72,9 +72,25 @@ const notificationVariantMeta: Record<string, { component: string; example: Reco
 		component: "NtfyNotification",
 		example: { notificationName: "ntfy topic", type: "ntfy", address: "https://ntfy.sh", topic: "checkmate-alerts" },
 	},
+	jasmin_sms: {
+		component: "JasminSmsNotification",
+		example: {
+			notificationName: "Jasmin SMS",
+			type: "jasmin_sms",
+			address: "http://10.3.104.178:8080/secure/sendbatch",
+			accessToken: "Basic enRsdTp6dGxw",
+			phone: "260950003956,260950003935",
+			jasminFrom: "260344",
+			jasminDlrEnabled: true,
+			jasminDlrMethod: "POST",
+			jasminDlrUrl: "http://10.3.104.178:8000/dlr/",
+			jasminDlrLevel: 2,
+			jasminAccountId: "344-test",
+		},
+	},
 };
 
-const decoratedVariants = createNotificationBodyValidation.options.map((variant) => {
+const decoratedVariants = notificationBodyValidationOptions.map((variant) => {
 	const typeField = variant.shape.type as z.ZodLiteral<string>;
 	const type = typeField.value;
 	const meta = notificationVariantMeta[type];
@@ -85,7 +101,7 @@ const decoratedVariants = createNotificationBodyValidation.options.map((variant)
 });
 
 const notificationBody = z
-	.discriminatedUnion("type", decoratedVariants as typeof createNotificationBodyValidation.options)
+	.discriminatedUnion("type", decoratedVariants as unknown as typeof notificationBodyValidationOptions)
 	.openapi("NotificationChannelBody");
 
 registry.registerPath({

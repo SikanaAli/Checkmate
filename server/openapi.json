@@ -570,6 +570,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/NtfyNotification"
+					},
+					{
+						"$ref": "#/components/schemas/JasminSmsNotification"
 					}
 				],
 				"discriminator": {
@@ -585,7 +588,8 @@
 						"telegram": "#/components/schemas/TelegramNotification",
 						"pushover": "#/components/schemas/PushoverNotification",
 						"twilio": "#/components/schemas/TwilioNotification",
-						"ntfy": "#/components/schemas/NtfyNotification"
+						"ntfy": "#/components/schemas/NtfyNotification",
+						"jasmin_sms": "#/components/schemas/JasminSmsNotification"
 					}
 				}
 			},
@@ -1056,6 +1060,96 @@
 					"type": "ntfy",
 					"address": "https://ntfy.sh",
 					"topic": "checkmate-alerts"
+				}
+			},
+			"JasminSmsNotification": {
+				"type": "object",
+				"properties": {
+					"notificationName": {
+						"type": "string",
+						"minLength": 1
+					},
+					"type": {
+						"type": "string",
+						"enum": ["jasmin_sms"]
+					},
+					"address": {
+						"type": "string",
+						"format": "uri"
+					},
+					"accessToken": {
+						"type": "string",
+						"minLength": 1
+					},
+					"phone": {
+						"type": "string",
+						"minLength": 1
+					},
+					"jasminFrom": {
+						"type": "string",
+						"minLength": 1
+					},
+					"jasminDlrEnabled": {
+						"type": "boolean"
+					},
+					"jasminDlrMethod": {
+						"type": "string",
+						"enum": ["POST", "GET"]
+					},
+					"jasminDlrUrl": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "uri"
+							},
+							{
+								"type": "string",
+								"enum": [""]
+							}
+						]
+					},
+					"jasminDlrLevel": {
+						"type": "integer",
+						"nullable": true,
+						"minimum": 0,
+						"maximum": 3
+					},
+					"jasminAccountId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string",
+								"enum": [""]
+							}
+						]
+					},
+					"jasminReportId": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string",
+								"enum": [""]
+							}
+						]
+					}
+				},
+				"required": ["notificationName", "type", "address", "accessToken", "phone", "jasminFrom"],
+				"example": {
+					"notificationName": "Jasmin SMS",
+					"type": "jasmin_sms",
+					"address": "http://10.3.104.178:8080/secure/sendbatch",
+					"accessToken": "Basic enRsdTp6dGxw",
+					"phone": "260950003956,260950003935",
+					"jasminFrom": "260344",
+					"jasminDlrEnabled": true,
+					"jasminDlrMethod": "POST",
+					"jasminDlrUrl": "http://10.3.104.178:8000/dlr/",
+					"jasminDlrLevel": 2,
+					"jasminAccountId": "344-test"
 				}
 			}
 		},

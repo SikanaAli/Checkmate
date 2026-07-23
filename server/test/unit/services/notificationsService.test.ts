@@ -50,6 +50,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 	const pushoverProvider = createProvider();
 	const twilioProvider = createProvider();
 	const ntfyProvider = createProvider();
+	const jasminSmsProvider = createProvider();
 	const settingsService = createSettingsService();
 	const notificationMessageBuilder = createMessageBuilder();
 
@@ -68,6 +69,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 		pushoverProvider,
 		twilioProvider,
 		ntfyProvider,
+		jasminSmsProvider,
 		settingsService,
 		notificationMessageBuilder,
 		...overrides,
@@ -88,6 +90,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 			pushover: defaults.pushoverProvider,
 			twilio: defaults.twilioProvider,
 			ntfy: defaults.ntfyProvider,
+			jasmin_sms: defaults.jasminSmsProvider,
 		},
 		settingsService: defaults.settingsService,
 		logger: defaults.logger,
@@ -154,7 +157,20 @@ describe("NotificationsService", () => {
 		});
 
 		it("routes to correct provider for each notification type", async () => {
-			const types = ["webhook", "slack", "matrix", "pager_duty", "discord", "email", "teams", "telegram", "pushover", "twilio", "ntfy"] as const;
+			const types = [
+				"webhook",
+				"slack",
+				"matrix",
+				"pager_duty",
+				"discord",
+				"email",
+				"teams",
+				"telegram",
+				"pushover",
+				"twilio",
+				"ntfy",
+				"jasmin_sms",
+			] as const;
 			for (const type of types) {
 				const deps = createService();
 				(deps.notificationsRepository.findNotificationsByIds as jest.Mock).mockResolvedValue([makeNotification({ type })]);
@@ -173,6 +189,7 @@ describe("NotificationsService", () => {
 					pushover: deps.pushoverProvider,
 					twilio: deps.twilioProvider,
 					ntfy: deps.ntfyProvider,
+					jasmin_sms: deps.jasminSmsProvider,
 				};
 				expect(providerMap[type].sendMessage).toHaveBeenCalledTimes(1);
 			}
@@ -258,6 +275,7 @@ describe("NotificationsService", () => {
 			["pushover"],
 			["twilio"],
 			["ntfy"],
+			["jasmin_sms"],
 		] as const)("routes %s to the correct provider", async (type) => {
 			const deps = createService();
 			const notification = makeNotification({ type: type as any });
@@ -277,6 +295,7 @@ describe("NotificationsService", () => {
 				pushover: deps.pushoverProvider,
 				twilio: deps.twilioProvider,
 				ntfy: deps.ntfyProvider,
+				jasmin_sms: deps.jasminSmsProvider,
 			};
 			expect(providerMap[type].sendTestAlert).toHaveBeenCalledWith(notification);
 		});

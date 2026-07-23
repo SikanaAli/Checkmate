@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { JasminDlrMethods } from "@/domain/notifications/notification.type.js";
 
 //****************************************
 // Notification Validations
 //****************************************
 
-export const createNotificationBodyValidation = z.discriminatedUnion("type", [
+export const notificationBodyValidationOptions = [
 	// Email notification
 	z.object({
 		notificationName: z.string().min(1, "Notification name is required"),
@@ -95,7 +96,37 @@ export const createNotificationBodyValidation = z.discriminatedUnion("type", [
 		address: z.url({ message: "Please enter a valid ntfy server URL" }),
 		topic: z.string().min(1, "Topic is required"),
 	}),
-]);
+	// Jasmin SMS notification
+	z.object({
+		notificationName: z.string().min(1, "Notification name is required"),
+		type: z.literal("jasmin_sms"),
+		address: z.url({ message: "Please enter a valid Jasmin sendbatch URL" }),
+		accessToken: z.string().min(1, "Authorization header is required"),
+		phone: z.string().min(1, "At least one recipient phone number is required"),
+		jasminFrom: z.string().min(1, "Sender is required"),
+		jasminDlrEnabled: z.boolean().optional(),
+		jasminDlrMethod: z.enum(JasminDlrMethods).optional(),
+		jasminDlrUrl: z.union([z.url({ message: "Please enter a valid DLR URL" }), z.literal("")]).optional(),
+		jasminDlrLevel: z.coerce.number().int().min(0).max(3).optional(),
+		jasminAccountId: z.union([z.string(), z.literal("")]).optional(),
+		jasminReportId: z.union([z.string(), z.literal("")]).optional(),
+	}),
+] as const;
+
+export const createNotificationBodyValidation = z.discriminatedUnion("type", notificationBodyValidationOptions).superRefine((data, ctx) => {
+	if (data.type !== "jasmin_sms" || !data.jasminDlrEnabled) {
+		return;
+	}
+	if (!data.jasminDlrMethod) {
+		ctx.addIssue({ code: "custom", message: "DLR method is required when DLR is enabled", path: ["jasminDlrMethod"] });
+	}
+	if (!data.jasminDlrUrl) {
+		ctx.addIssue({ code: "custom", message: "DLR URL is required when DLR is enabled", path: ["jasminDlrUrl"] });
+	}
+	if (data.jasminDlrLevel === undefined) {
+		ctx.addIssue({ code: "custom", message: "DLR level is required when DLR is enabled", path: ["jasminDlrLevel"] });
+	}
+});
 
 export const testNotificationBodyValidation = createNotificationBodyValidation;
 

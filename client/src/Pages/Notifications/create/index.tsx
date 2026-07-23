@@ -1,5 +1,5 @@
 import { BasePage, ConfigBox } from "@/Components/design-elements";
-import { TextField, Select, Button } from "@/Components/inputs";
+import { TextField, Select, Button, SwitchComponent } from "@/Components/inputs";
 import MenuItem from "@mui/material/MenuItem";
 import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
@@ -15,7 +15,7 @@ import { useNotificationForm } from "@/Hooks/useNotificationForm";
 import type { NotificationFormData } from "@/Validation/notifications";
 import type { Notification } from "@/Types/Notification";
 import { useTranslation } from "react-i18next";
-import { NotificationChannels } from "@/Types/Notification";
+import { JasminDlrMethods, NotificationChannels } from "@/Types/Notification";
 
 const NotificationsCreatePage = () => {
 	const { t } = useTranslation();
@@ -46,6 +46,7 @@ const NotificationsCreatePage = () => {
 	}, [defaults, reset]);
 
 	const watchedType = watch("type");
+	const watchedJasminDlrEnabled = watch("jasminDlrEnabled");
 
 	useEffect(() => {
 		clearErrors();
@@ -151,7 +152,8 @@ const NotificationsCreatePage = () => {
 				watchedType !== "telegram" &&
 				watchedType !== "pushover" &&
 				watchedType !== "twilio" &&
-				watchedType !== "ntfy" && (
+				watchedType !== "ntfy" &&
+				watchedType !== "jasmin_sms" && (
 					<ConfigBox
 						title={addressConfig.title}
 						subtitle={addressConfig.description}
@@ -175,6 +177,229 @@ const NotificationsCreatePage = () => {
 						}
 					/>
 				)}
+			{watchedType === "jasmin_sms" && (
+				<ConfigBox
+					title={t("pages.notifications.form.jasminSms.title")}
+					subtitle={t("pages.notifications.form.jasminSms.description")}
+					rightContent={
+						<Stack spacing={theme.spacing(8)}>
+							<Controller
+								name="address"
+								control={control}
+								defaultValue={"address" in defaults ? defaults.address : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t(
+											"pages.notifications.form.jasminSms.optionSendbatchUrl"
+										)}
+										placeholder={t(
+											"pages.notifications.form.jasminSms.placeholderSendbatchUrl"
+										)}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="accessToken"
+								control={control}
+								defaultValue={"accessToken" in defaults ? defaults.accessToken : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t(
+											"pages.notifications.form.jasminSms.optionAuthorization"
+										)}
+										placeholder={t(
+											"pages.notifications.form.jasminSms.placeholderAuthorization"
+										)}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="jasminFrom"
+								control={control}
+								defaultValue={"jasminFrom" in defaults ? defaults.jasminFrom : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.jasminSms.optionFrom")}
+										placeholder={t("pages.notifications.form.jasminSms.placeholderFrom")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="phone"
+								control={control}
+								defaultValue={"phone" in defaults ? defaults.phone : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.jasminSms.optionRecipients")}
+										placeholder={t(
+											"pages.notifications.form.jasminSms.placeholderRecipients"
+										)}
+										fullWidth
+										multiline
+										minRows={3}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="jasminAccountId"
+								control={control}
+								defaultValue={
+									"jasminAccountId" in defaults ? defaults.jasminAccountId : ""
+								}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.jasminSms.optionAccountId")}
+										placeholder={t(
+											"pages.notifications.form.jasminSms.placeholderAccountId"
+										)}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="jasminReportId"
+								control={control}
+								defaultValue={"jasminReportId" in defaults ? defaults.jasminReportId : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.jasminSms.optionReportId")}
+										placeholder={t(
+											"pages.notifications.form.jasminSms.placeholderReportId"
+										)}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="jasminDlrEnabled"
+								control={control}
+								defaultValue={
+									"jasminDlrEnabled" in defaults ? defaults.jasminDlrEnabled : false
+								}
+								render={({ field }) => (
+									<Stack
+										direction="row"
+										alignItems="center"
+										spacing={theme.spacing(4)}
+									>
+										<SwitchComponent
+											checked={field.value ?? false}
+											onChange={(event) => field.onChange(event.target.checked)}
+										/>
+										<Typography>
+											{t("pages.notifications.form.jasminSms.optionDlrEnabled")}
+										</Typography>
+									</Stack>
+								)}
+							/>
+							{watchedJasminDlrEnabled && (
+								<>
+									<Controller
+										name="jasminDlrMethod"
+										control={control}
+										defaultValue={
+											"jasminDlrMethod" in defaults ? defaults.jasminDlrMethod : "POST"
+										}
+										render={({ field, fieldState }) => (
+											<Select
+												value={field.value}
+												fieldLabel={t(
+													"pages.notifications.form.jasminSms.optionDlrMethod"
+												)}
+												error={!!fieldState.error}
+												onChange={field.onChange}
+											>
+												{JasminDlrMethods.map((method) => (
+													<MenuItem
+														key={method}
+														value={method}
+													>
+														<Typography>{method}</Typography>
+													</MenuItem>
+												))}
+											</Select>
+										)}
+									/>
+									<Controller
+										name="jasminDlrUrl"
+										control={control}
+										defaultValue={"jasminDlrUrl" in defaults ? defaults.jasminDlrUrl : ""}
+										render={({ field, fieldState }) => (
+											<TextField
+												{...field}
+												type="text"
+												fieldLabel={t("pages.notifications.form.jasminSms.optionDlrUrl")}
+												placeholder={t(
+													"pages.notifications.form.jasminSms.placeholderDlrUrl"
+												)}
+												fullWidth
+												error={!!fieldState.error}
+												helperText={fieldState.error?.message ?? ""}
+											/>
+										)}
+									/>
+									<Controller
+										name="jasminDlrLevel"
+										control={control}
+										defaultValue={
+											"jasminDlrLevel" in defaults ? defaults.jasminDlrLevel : 2
+										}
+										render={({ field, fieldState }) => (
+											<TextField
+												name={field.name}
+												value={field.value ?? ""}
+												onBlur={field.onBlur}
+												inputRef={field.ref}
+												onChange={(event) => {
+													const value = event.target.value;
+													field.onChange(value === "" ? undefined : Number(value));
+												}}
+												type="number"
+												fieldLabel={t(
+													"pages.notifications.form.jasminSms.optionDlrLevel"
+												)}
+												placeholder={t(
+													"pages.notifications.form.jasminSms.placeholderDlrLevel"
+												)}
+												fullWidth
+												error={!!fieldState.error}
+												helperText={fieldState.error?.message ?? ""}
+											/>
+										)}
+									/>
+								</>
+							)}
+						</Stack>
+					}
+				/>
+			)}
 			{watchedType === "ntfy" && (
 				<ConfigBox
 					title={t("pages.notifications.form.ntfy.title")}

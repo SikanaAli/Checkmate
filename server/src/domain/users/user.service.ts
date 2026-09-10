@@ -12,6 +12,7 @@ import { IEmailService } from "@/service/emailService.js";
 import { EnvConfig, ISettingsService } from "@/domain/app-settings/app-settings.service.js";
 import { ILogger } from "@/utils/logger.js";
 import { IJobScheduler } from "@/worker/worker.interface.js";
+import type { ILdapService } from "@/domain/users/ldap.service.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 type CryptoType = typeof crypto;
@@ -51,6 +52,7 @@ export class UserService implements IUserService {
 
 	private emailService: IEmailService;
 	private settingsService: ISettingsService;
+	private ldapService: ILdapService;
 	private logger: ILogger;
 	private jwt: JwtType;
 	private scheduler: IJobScheduler;
@@ -66,6 +68,7 @@ export class UserService implements IUserService {
 		crypto,
 		emailService,
 		settingsService,
+		ldapService,
 		logger,
 		jwt,
 		scheduler,
@@ -79,6 +82,7 @@ export class UserService implements IUserService {
 		crypto: CryptoType;
 		emailService: IEmailService;
 		settingsService: ISettingsService;
+		ldapService: ILdapService;
 		logger: ILogger;
 		jwt: JwtType;
 		scheduler: IJobScheduler;
@@ -91,6 +95,7 @@ export class UserService implements IUserService {
 	}) {
 		this.emailService = emailService;
 		this.settingsService = settingsService;
+		this.ldapService = ldapService;
 		this.logger = logger;
 		this.jwt = jwt;
 		this.scheduler = scheduler;
@@ -215,15 +220,23 @@ export class UserService implements IUserService {
 	};
 
 	loginUser = async (email: string, password: string) => {
-		// Check if user exists
-		const user = await this.usersRepository.findByEmail(email);
-		// Compare password
-		const match = await bcrypt.compare(password, user.password);
+		try {
+			return await this.loginLocalUser(email, password);
+		} catch (error) {
+			const settings = await this.settingsService.getDBSettings();
+			if (!settings.ldapEnabled) {
+				throw error;
+			}
+			return await this.loginLdapUser(email, password, settings);
+		}
+	};
 
+	private loginLocalUser = async (email: string, password: string) => {
+		const user = await this.usersRepository.findByEmail(email);
+		const match = await bcrypt.compare(password, user.password);
 		if (match !== true) {
 			throw new AppError({ message: "Incorrect password", service: SERVICE_NAME, status: 401 });
 		}
-
 		// Remove password from user object.  Should this be abstracted to DB layer?
 		const userWithoutPassword = { ...user };
 		userWithoutPassword.password = "";
@@ -233,6 +246,42 @@ export class UserService implements IUserService {
 		const appSettings = await this.settingsService.getSettings();
 		const token = this.issueToken(userWithoutPassword, appSettings);
 		// reset avatar image
+		userWithoutPassword.avatarImage = user.avatarImage;
+		return { user: userWithoutPassword, token };
+	};
+
+	private loginLdapUser = async (email: string, password: string, settings: Awaited<ReturnType<ISettingsService["getDBSettings"]>>) => {
+		const ldapProfile = await this.ldapService.authenticate(email, password, settings);
+		let user: User;
+
+		try {
+			user = await this.usersRepository.findByEmail(ldapProfile.email);
+			user = await this.usersRepository.updateById(user.id, {
+				firstName: ldapProfile.firstName,
+				lastName: ldapProfile.lastName,
+				role: ldapProfile.roles,
+			});
+		} catch {
+			const superAdmin = await this.usersRepository.findFirstSuperAdmin();
+			if (!superAdmin?.teamId) {
+				throw new AppError({ message: "Cannot provision LDAP user before a superadmin exists", service: SERVICE_NAME, status: 500 });
+			}
+			user = await this.usersRepository.create(
+				{
+					firstName: ldapProfile.firstName,
+					lastName: ldapProfile.lastName,
+					email: ldapProfile.email,
+					password: this.hashPassword(this.crypto.randomBytes(32).toString("hex")),
+					role: ldapProfile.roles,
+					teamId: superAdmin.teamId,
+					isVerified: true,
+				},
+				null
+			);
+		}
+
+		const userWithoutPassword: User = { ...user, password: "", avatarImage: "" };
+		const token = this.issueToken(userWithoutPassword, this.settingsService.getSettings());
 		userWithoutPassword.avatarImage = user.avatarImage;
 		return { user: userWithoutPassword, token };
 	};

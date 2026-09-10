@@ -28,6 +28,7 @@ class SettingsController implements ISettingsController {
 		const returnSettings: Record<string, unknown | null> = {
 			pagespeedKeySet: false,
 			emailPasswordSet: false,
+			ldapBindPasswordSet: false,
 			settings: null,
 		};
 
@@ -38,6 +39,10 @@ class SettingsController implements ISettingsController {
 		if (typeof sanitizedSettings.systemEmailPassword !== "undefined") {
 			returnSettings.emailPasswordSet = true;
 			delete sanitizedSettings.systemEmailPassword;
+		}
+		if (typeof sanitizedSettings.ldapBindPassword !== "undefined") {
+			returnSettings.ldapBindPasswordSet = true;
+			delete sanitizedSettings.ldapBindPassword;
 		}
 		returnSettings.settings = sanitizedSettings;
 		return returnSettings;
@@ -56,6 +61,15 @@ class SettingsController implements ISettingsController {
 
 	updateAppSettings = catchAsync(async (req: Request, res: Response) => {
 		const validatedBody = updateAppSettingsBodyValidation.parse(req.body);
+		const updatesBranding =
+			Object.prototype.hasOwnProperty.call(validatedBody, "appName") || Object.prototype.hasOwnProperty.call(validatedBody, "appLogo");
+
+		if (updatesBranding && !req.user?.role?.includes("superadmin")) {
+			throw new AppError({
+				message: "Only superadmins can update application branding",
+				status: 403,
+			});
+		}
 
 		const updatedSettings = await this.settingsService.updateDbSettings(validatedBody);
 		const returnSettings = this.buildAppSettings(updatedSettings);

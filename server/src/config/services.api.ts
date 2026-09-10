@@ -5,6 +5,7 @@ import { IMonitorService, MonitorService } from "@/domain/monitors/monitor.servi
 import { IStatusPageService, StatusPageService } from "@/domain/status-pages/status-page.service.js";
 import { ITagsService, TagsService } from "@/domain/tags/tag.service.js";
 import { IUserService, UserService } from "@/domain/users/user.service.js";
+import { LdapService } from "@/domain/users/ldap.service.js";
 import { IJobScheduler } from "@/worker/worker.interface.js";
 
 // Third-party
@@ -51,6 +52,7 @@ export const buildApi = (shared: SharedServices, jobScheduler: IJobScheduler): A
 		crypto,
 		emailService,
 		settingsService,
+		ldapService: new LdapService(logger),
 		logger,
 		jwt,
 		scheduler: jobScheduler,

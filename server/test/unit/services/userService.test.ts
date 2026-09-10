@@ -40,6 +40,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 		updateById: jest.fn().mockResolvedValue(makeUser()),
 		deleteById: jest.fn().mockResolvedValue(makeUser()),
 		findSuperAdmin: jest.fn().mockResolvedValue(true),
+		findFirstSuperAdmin: jest.fn().mockResolvedValue(makeUser({ role: ["superadmin"] })),
 	};
 	const invitesRepository = {
 		findByTokenAndDelete: jest.fn().mockResolvedValue({ role: ["user"], teamId: "team-1", email: "invited@example.com" }),
@@ -62,8 +63,12 @@ const createService = (overrides?: Record<string, unknown>) => {
 		buildEmail: jest.fn().mockResolvedValue("<html>Welcome</html>"),
 		sendEmail: jest.fn().mockResolvedValue("msg-id-123"),
 	};
+	const ldapService = {
+		authenticate: jest.fn(),
+	};
 	const settingsService = {
 		getSettings: jest.fn().mockReturnValue(makeAppSettings()),
+		getDBSettings: jest.fn().mockResolvedValue({ ldapEnabled: false }),
 	};
 	const scheduler = {
 		deleteJob: jest.fn().mockResolvedValue(undefined),
@@ -84,6 +89,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 		teamsRepository,
 		monitorsRepository,
 		emailService,
+		ldapService,
 		settingsService,
 		scheduler,
 		jwt: jwtMock,

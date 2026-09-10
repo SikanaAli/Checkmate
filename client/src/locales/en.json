@@ -1288,6 +1288,22 @@
 						}
 					}
 				},
+				"branding": {
+					"title": "Application branding",
+					"description": "Customize the name, logo, and browser icon shown for this Checkmate instance.",
+					"preview": "Current saved branding",
+					"option": {
+						"name": {
+							"label": "Application name",
+							"placeholder": "Checkmate"
+						},
+						"logo": {
+							"label": "Application logo / icon",
+							"helper": "SVG, PNG, JPG, or WEBP. Use a square image for the cleanest favicon.",
+							"readError": "Unable to read the selected logo file."
+						}
+					}
+				},
 				"pagespeed": {
 					"title": "Google PageSpeed API key",
 					"description": "Enter your Google PageSpeed API key to enable Google PageSpeed monitoring. Click Reset to update the key.",
@@ -1408,6 +1424,49 @@
 						},
 						"rejectUnauthorized": {
 							"label": "Reject invalid certificates: Reject connections with self-signed or untrusted certificates"
+						}
+					}
+				},
+				"ldap": {
+					"title": "LDAP authentication",
+					"description": "Allow users to sign in with LDAP credentials and map admin access from group membership.",
+					"option": {
+						"enabled": {
+							"label": "Enable LDAP authentication"
+						},
+						"url": {
+							"label": "LDAP URL",
+							"placeholder": "ldaps://ldap.example.com:636"
+						},
+						"bindDn": {
+							"label": "Bind DN",
+							"placeholder": "CN=checkmate-bind,OU=Service Accounts,DC=example,DC=com"
+						},
+						"bindPassword": {
+							"label": "Bind password",
+							"labelSet": "Bind password is set. Click Reset to change it.",
+							"placeholder": "Enter bind user password"
+						},
+						"baseDn": {
+							"label": "Base DN",
+							"placeholder": "OU=Users,DC=example,DC=com"
+						},
+						"searchFilter": {
+							"label": "User search filter",
+							"placeholder": "(mail={{email}})"
+						},
+						"groupAttribute": {
+							"label": "Group attribute",
+							"placeholder": "memberOf"
+						},
+						"adminGroupDn": {
+							"label": "Admin group DN",
+							"placeholder": "Optional, e.g. CN=Checkmate Admins,OU=Groups,DC=example,DC=com"
+						},
+						"roleMappings": {
+							"label": "Role mappings",
+							"placeholder": "admin=CN=Checkmate Admins,OU=Groups,DC=example,DC=com\nsuperadmin=CN=Checkmate Owners,OU=Groups,DC=example,DC=com",
+							"helper": "One mapping per line. Supported roles: user, admin, superadmin."
 						}
 					}
 				},

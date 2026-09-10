@@ -1,5 +1,5 @@
 import { Schema, model, type Types } from "mongoose";
-import type { Settings, SettingsThresholds } from "@/domain/app-settings/app-settings.type.js";
+import type { LdapRoleMapping, Settings, SettingsThresholds } from "@/domain/app-settings/app-settings.type.js";
 
 interface AppSettingsDocument extends Omit<Settings, "id" | "createdAt" | "updatedAt"> {
 	_id: Types.ObjectId;
@@ -17,10 +17,20 @@ const thresholdsSchema = new Schema<SettingsThresholds>(
 	{ _id: false }
 );
 
+const ldapRoleMappingSchema = new Schema<LdapRoleMapping>(
+	{
+		role: { type: String, enum: ["user", "admin", "superadmin"], required: true },
+		groupDn: { type: String, required: true },
+	},
+	{ _id: false }
+);
+
 const AppSettingsSchema = new Schema<AppSettingsDocument>(
 	{
 		checkTTL: { type: Number, default: 30 },
 		language: { type: String, default: "gb" },
+		appName: { type: String },
+		appLogo: { type: String },
 		jwtSecret: { type: String },
 		pagespeedApiKey: { type: String },
 		systemEmailHost: { type: String },
@@ -36,6 +46,15 @@ const AppSettingsSchema = new Schema<AppSettingsDocument>(
 		systemEmailIgnoreTLS: { type: Boolean, default: false },
 		systemEmailRequireTLS: { type: Boolean, default: false },
 		systemEmailRejectUnauthorized: { type: Boolean, default: true },
+		ldapEnabled: { type: Boolean, default: false },
+		ldapUrl: { type: String },
+		ldapBindDn: { type: String },
+		ldapBindPassword: { type: String },
+		ldapBaseDn: { type: String },
+		ldapUserSearchFilter: { type: String, default: "(mail={{email}})" },
+		ldapGroupAttribute: { type: String, default: "memberOf" },
+		ldapAdminGroupDn: { type: String },
+		ldapRoleMappings: { type: [ldapRoleMappingSchema], default: [] },
 		showURL: { type: Boolean, default: false },
 		singleton: { type: Boolean, required: true, unique: true, default: true },
 		version: { type: Number, default: 1 },

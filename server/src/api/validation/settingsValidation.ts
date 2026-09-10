@@ -12,6 +12,21 @@ export const updateAppSettingsBodyValidation = z
 		pagespeedApiKey: z.string().nullable().optional(),
 		language: z.string().optional(),
 		timezone: z.string().optional(),
+		appName: z
+			.string()
+			.max(80)
+			.transform((val) => (val.trim() === "" ? null : val.trim()))
+			.nullable()
+			.optional(),
+		appLogo: z
+			.string()
+			.max(500_000)
+			.refine((val) => val === "" || val.startsWith("data:image/"), {
+				message: "Application logo must be an image data URL",
+			})
+			.transform((val) => (val === "" ? null : val))
+			.nullable()
+			.optional(),
 		systemEmailHost: z.string().nullable().optional(),
 		systemEmailAddress: z.string().nullable().optional(),
 		systemEmailDisplayName: z
@@ -31,6 +46,22 @@ export const updateAppSettingsBodyValidation = z
 		systemEmailIgnoreTLS: z.boolean().optional(),
 		systemEmailRequireTLS: z.boolean().optional(),
 		systemEmailRejectUnauthorized: z.boolean().optional(),
+		ldapEnabled: z.boolean().optional(),
+		ldapUrl: z.string().trim().nullable().optional(),
+		ldapBindDn: z.string().trim().nullable().optional(),
+		ldapBindPassword: z.string().nullable().optional(),
+		ldapBaseDn: z.string().trim().nullable().optional(),
+		ldapUserSearchFilter: z.string().trim().nullable().optional(),
+		ldapGroupAttribute: z.string().trim().nullable().optional(),
+		ldapAdminGroupDn: z.string().trim().nullable().optional(),
+		ldapRoleMappings: z
+			.array(
+				z.object({
+					role: z.enum(["user", "admin", "superadmin"]),
+					groupDn: z.string().trim().min(1),
+				})
+			)
+			.optional(),
 
 		globalThresholds: z
 			.object({

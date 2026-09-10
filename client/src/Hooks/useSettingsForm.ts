@@ -15,6 +15,8 @@ export const useSettingsForm = ({ data = null }: UseSettingsFormOptions = {}) =>
 			systemEmailSecure: data?.systemEmailSecure ?? false,
 			systemEmailPool: data?.systemEmailPool ?? false,
 			showURL: data?.showURL ?? false,
+			appName: data?.appName || "",
+			appLogo: data?.appLogo || "",
 			systemEmailHost: data?.systemEmailHost || "",
 			systemEmailUser: data?.systemEmailUser || "",
 			systemEmailAddress: data?.systemEmailAddress || "",
@@ -22,6 +24,18 @@ export const useSettingsForm = ({ data = null }: UseSettingsFormOptions = {}) =>
 			systemEmailConnectionHost: data?.systemEmailConnectionHost || "localhost",
 			systemEmailTLSServername: data?.systemEmailTLSServername || "",
 			systemEmailPort: data?.systemEmailPort,
+			ldapEnabled: data?.ldapEnabled ?? false,
+			ldapUrl: data?.ldapUrl || "",
+			ldapBindDn: data?.ldapBindDn || "",
+			ldapBindPassword: "",
+			ldapBaseDn: data?.ldapBaseDn || "",
+			ldapUserSearchFilter: data?.ldapUserSearchFilter || "(mail={{email}})",
+			ldapGroupAttribute: data?.ldapGroupAttribute || "memberOf",
+			ldapAdminGroupDn: data?.ldapAdminGroupDn || "",
+			ldapRoleMappings:
+				data?.ldapRoleMappings
+					?.map((mapping) => `${mapping.role}=${mapping.groupDn}`)
+					.join("\n") || "",
 			globalThresholds: {
 				cpu:
 					data?.globalThresholds?.cpu && data.globalThresholds.cpu >= 1

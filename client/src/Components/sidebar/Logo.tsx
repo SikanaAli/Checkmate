@@ -7,12 +7,14 @@ import { useDispatch } from "react-redux";
 import { useTranslation } from "react-i18next";
 import useSidebar from "@/Hooks/useSidebar";
 import KingIcon from "@/assets/icons/checkmate-icon.svg?react";
+import { useAppBranding } from "@/Hooks/useAppBranding";
 
 export const Logo = (props: StackProps) => {
 	const { t } = useTranslation();
 	const theme = useTheme();
 	const dispatch = useDispatch();
 	const { collapsed } = useSidebar();
+	const { appName, appLogo } = useAppBranding();
 	return (
 		<Stack
 			direction="row"
@@ -37,7 +39,16 @@ export const Logo = (props: StackProps) => {
 					},
 				}}
 			>
-				<KingIcon />
+				{appLogo ? (
+					<Box
+						component="img"
+						src={appLogo}
+						alt={appName}
+						sx={{ width: "100%", height: "100%", objectFit: "contain" }}
+					/>
+				) : (
+					<KingIcon />
+				)}
 			</Box>
 			<Box
 				overflow={"hidden"}
@@ -55,7 +66,7 @@ export const Logo = (props: StackProps) => {
 					variant="h2"
 					fontWeight={500}
 				>
-					{t("common.appName")}
+					{appName || t("common.appName")}
 				</Typography>
 			</Box>
 		</Stack>

@@ -1,6 +1,6 @@
 services:
   checkmate:
-    image: ghcr.io/bluewave-labs/checkmate:latest
+    image: ghcr.io/bluewave-labs/checkmate:develop
     pull_policy: always
     restart: always
     ports:
@@ -31,6 +31,8 @@ services:
     image: mongo:8.0
     restart: always
     command: ["mongod", "--quiet", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:

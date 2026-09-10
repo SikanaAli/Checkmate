@@ -82,6 +82,11 @@ class MongoUsersRepository implements IUsersRepository {
 		return this.mapDocuments(users);
 	};
 
+	findFirstSuperAdmin = async () => {
+		const user = await UserModel.findOne({ role: "superadmin" }).select("-profileImage");
+		return user ? this.toEntity(user) : null;
+	};
+
 	updateById = async (id: string, patch: Partial<User & { deleteProfileImage?: boolean }>, file?: Express.Multer.File | null): Promise<User> => {
 		const candidateUser = { ...patch };
 		let unsetFields: Record<string, 1> | undefined;

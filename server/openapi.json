@@ -2520,6 +2520,9 @@
 										"minLength": 8,
 										"pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!?@#$%^&*()\\-_=+[\\]{};:'\",.~`|\\\\/])[A-Za-z0-9!?@#$%^&*()\\-_=+[\\]{};:'\",.~`|\\\\/]+$"
 									},
+									"deleteProfileImage": {
+										"type": "boolean"
+									},
 									"profileImage": {
 										"type": "string",
 										"format": "binary"
@@ -3841,7 +3844,7 @@
 					{
 						"schema": {
 							"type": "string",
-							"enum": ["manual", "automatic"]
+							"enum": ["automatic", "manual"]
 						},
 						"required": false,
 						"name": "resolutionType",
@@ -10071,6 +10074,16 @@
 									"timezone": {
 										"type": "string"
 									},
+									"appName": {
+										"type": "string",
+										"nullable": true,
+										"maxLength": 80
+									},
+									"appLogo": {
+										"type": "string",
+										"nullable": true,
+										"maxLength": 500000
+									},
 									"systemEmailHost": {
 										"type": "string",
 										"nullable": true
@@ -10117,6 +10130,54 @@
 									},
 									"systemEmailRejectUnauthorized": {
 										"type": "boolean"
+									},
+									"ldapEnabled": {
+										"type": "boolean"
+									},
+									"ldapUrl": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapBindDn": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapBindPassword": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapBaseDn": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapUserSearchFilter": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapGroupAttribute": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapAdminGroupDn": {
+										"type": "string",
+										"nullable": true
+									},
+									"ldapRoleMappings": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"role": {
+													"type": "string",
+													"enum": ["user", "admin", "superadmin"]
+												},
+												"groupDn": {
+													"type": "string",
+													"minLength": 1
+												}
+											},
+											"required": ["role", "groupDn"]
+										}
 									},
 									"globalThresholds": {
 										"type": "object",
@@ -10632,7 +10693,7 @@
 									},
 									"theme": {
 										"type": "string",
-										"enum": ["refined", "modern", "bold", "editorial"]
+										"enum": ["refined", "modern", "bold", "editorial", "minimal"]
 									},
 									"themeMode": {
 										"type": "string",
@@ -10850,7 +10911,7 @@
 									},
 									"theme": {
 										"type": "string",
-										"enum": ["refined", "modern", "bold", "editorial"]
+										"enum": ["refined", "modern", "bold", "editorial", "minimal"]
 									},
 									"themeMode": {
 										"type": "string",

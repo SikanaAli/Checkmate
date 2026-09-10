@@ -1,5 +1,11 @@
-import { BasePage, ConfigBox, TextLink } from "@/Components/design-elements";
-import { Autocomplete, Select, Dialog, SwitchComponent } from "@/Components/inputs";
+import { BasePage, TextLink } from "@/Components/design-elements";
+import {
+	Autocomplete,
+	Select,
+	Dialog,
+	SwitchComponent,
+	ImageUpload,
+} from "@/Components/inputs";
 import { logger } from "@/Utils/logger";
 import { LAYOUT } from "@/Utils/Theme/constants";
 import {
@@ -8,9 +14,13 @@ import {
 	MenuItem,
 	Link,
 	Alert,
+	Accordion,
+	AccordionDetails,
+	AccordionSummary,
 	type SelectChangeEvent,
 } from "@mui/material";
 import { useEffect } from "react";
+import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -19,7 +29,7 @@ import DummyChart from "@/Pages/Settings/DummyChart";
 import { useGet, usePatch, usePost, useLazyGet } from "@/Hooks/UseApi";
 import { useToast } from "@/Hooks/UseToast";
 import { useSettingsForm } from "@/Hooks/useSettingsForm";
-import { useIsAdmin } from "@/Hooks/useIsAdmin.js";
+import { useIsAdmin, useIsSuperAdmin } from "@/Hooks/useIsAdmin.js";
 import type { SettingsFormData, SettingsFormInput } from "@/Validation/settings";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
@@ -27,6 +37,7 @@ import { TextField, Button, FieldLabel, SliderWithLabel } from "@/Components/inp
 import { languageNames } from "@/Components/inputs/LanguageSelector";
 import { Box, Typography } from "@mui/material";
 import { useDelete } from "@/Hooks/UseApi";
+import { useAppBranding } from "@/Hooks/useAppBranding";
 
 import {
 	setTimezone,
@@ -39,6 +50,7 @@ import {
 import timezones from "@/Utils/timezones.json";
 import type { RootState } from "@/Types/state";
 import { CHECK_TTL_SENTINEL } from "@/Types/Check";
+import { ChevronDown } from "lucide-react";
 
 interface Timezone {
 	id: string;
@@ -49,14 +61,95 @@ interface SettingsResponse {
 	settings: any;
 	pagespeedKeySet: boolean;
 	emailPasswordSet: boolean;
+	ldapBindPasswordSet: boolean;
 }
+
+const fileToDataUrl = (file: File): Promise<string> => {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+		reader.onerror = () => reject(reader.error);
+		reader.readAsDataURL(file);
+	});
+};
+
+const SettingsSection = ({
+	title,
+	subtitle,
+	leftContent,
+	rightContent,
+	defaultExpanded = false,
+}: {
+	title: string;
+	subtitle: ReactNode;
+	leftContent?: ReactNode;
+	rightContent: ReactNode;
+	defaultExpanded?: boolean;
+}) => {
+	const theme = useTheme();
+
+	return (
+		<Accordion
+			defaultExpanded={defaultExpanded}
+			disableGutters
+			sx={{
+				backgroundColor: theme.palette.background.paper,
+				border: 1,
+				borderColor: theme.palette.divider,
+				borderRadius: theme.shape.borderRadius,
+				boxShadow: "none",
+				"&:before": {
+					display: "none",
+				},
+				"&.Mui-expanded": {
+					margin: 0,
+				},
+			}}
+		>
+			<AccordionSummary
+				expandIcon={<ChevronDown size={20} />}
+				sx={{
+					gap: theme.spacing(LAYOUT.SM),
+					padding: theme.spacing(LAYOUT.MD, LAYOUT.XXL),
+					"& .MuiAccordionSummary-content": {
+						margin: 0,
+					},
+					"&.Mui-expanded": {
+						minHeight: "auto",
+						borderBottom: 1,
+						borderColor: theme.palette.divider,
+					},
+				}}
+			>
+				<Stack spacing={theme.spacing(LAYOUT.XS)}>
+					<Typography
+						component="h2"
+						variant="eyebrow"
+						color="text.secondary"
+					>
+						{title}
+					</Typography>
+					{subtitle && <Typography component="p">{subtitle}</Typography>}
+				</Stack>
+			</AccordionSummary>
+			<AccordionDetails sx={{ padding: theme.spacing(LAYOUT.XXL) }}>
+				<Stack gap={theme.spacing(LAYOUT.MD)}>
+					{leftContent}
+					{rightContent}
+				</Stack>
+			</AccordionDetails>
+		</Accordion>
+	);
+};
 
 export const SettingsPage = () => {
 	const theme = useTheme();
 	const { t, i18n } = useTranslation();
 	const dispatch = useDispatch();
 	const isAdmin = useIsAdmin();
+	const isSuperAdmin = useIsSuperAdmin();
 	const { toastError } = useToast();
+	const { appName, appLogo } = useAppBranding();
 	// Local state for demo monitors dialog
 	const [isDemoMonitorsDialogOpen, setIsDemoMonitorsDialogOpen] = useState(false);
 	const { post: postDemoMonitors, loading: isPostingDemoMonitors } = usePost();
@@ -79,6 +172,10 @@ export const SettingsPage = () => {
 		fetchedSettings?.emailPasswordSet ?? false
 	);
 	const [emailPasswordHasBeenReset, setEmailPasswordHasBeenReset] = useState(false);
+	const [isLdapBindPasswordSet, setIsLdapBindPasswordSet] = useState(
+		fetchedSettings?.ldapBindPasswordSet ?? false
+	);
+	const [ldapBindPasswordHasBeenReset, setLdapBindPasswordHasBeenReset] = useState(false);
 	// Test email functionality
 	const { post: sendTestEmail, loading: isSendingTestEmail } = usePost();
 	// Local state for clear stats dialog
@@ -106,6 +203,7 @@ export const SettingsPage = () => {
 		if (fetchedSettings) {
 			setIsApiKeySet(fetchedSettings.pagespeedKeySet);
 			setIsEmailPasswordSet(fetchedSettings.emailPasswordSet);
+			setIsLdapBindPasswordSet(fetchedSettings.ldapBindPasswordSet);
 		}
 	}, [fetchedSettings]);
 
@@ -152,6 +250,11 @@ export const SettingsPage = () => {
 	const handleResetEmailPassword = () => {
 		form.setValue("systemEmailPassword", "");
 		setEmailPasswordHasBeenReset(true);
+	};
+
+	const handleResetLdapBindPassword = () => {
+		form.setValue("ldapBindPassword", "");
+		setLdapBindPasswordHasBeenReset(true);
 	};
 
 	const handleSendTestEmail = async () => {
@@ -259,6 +362,13 @@ export const SettingsPage = () => {
 		if (isEmailPasswordSet && !emailPasswordHasBeenReset) {
 			delete (dataToSend as any).systemEmailPassword;
 		}
+		if (isLdapBindPasswordSet && !ldapBindPasswordHasBeenReset) {
+			delete (dataToSend as any).ldapBindPassword;
+		}
+		if (!isSuperAdmin) {
+			delete (dataToSend as any).appName;
+			delete (dataToSend as any).appLogo;
+		}
 
 		const result = await patch("/settings", dataToSend as SettingsFormData);
 
@@ -269,6 +379,8 @@ export const SettingsPage = () => {
 				setApiKeyHasBeenReset(false);
 				setIsEmailPasswordSet(result.data.emailPasswordSet);
 				setEmailPasswordHasBeenReset(false);
+				setIsLdapBindPasswordSet(result.data.ldapBindPasswordSet);
+				setLdapBindPasswordHasBeenReset(false);
 			}
 		}
 	};
@@ -286,7 +398,7 @@ export const SettingsPage = () => {
 			onSubmit={form.handleSubmit(onSubmit, onError)}
 		>
 			<Stack gap={theme.spacing(LAYOUT.MD)}>
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.timezone.title")}
 					subtitle={t("pages.settings.form.timezone.description")}
 					rightContent={
@@ -304,7 +416,7 @@ export const SettingsPage = () => {
 						/>
 					}
 				/>
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.ui.title")}
 					subtitle={t("pages.settings.form.ui.description")}
 					rightContent={
@@ -351,8 +463,110 @@ export const SettingsPage = () => {
 						</Stack>
 					}
 				/>
+				{isSuperAdmin && (
+					<SettingsSection
+						title={t("pages.settings.form.branding.title")}
+						subtitle={t("pages.settings.form.branding.description")}
+						leftContent={
+							<Stack gap={theme.spacing(LAYOUT.SM)}>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+								>
+									{t("pages.settings.form.branding.preview")}
+								</Typography>
+								<Stack
+									direction="row"
+									alignItems="center"
+									gap={theme.spacing(LAYOUT.SM)}
+								>
+									{appLogo ? (
+										<Box
+											component="img"
+											src={appLogo}
+											alt={appName}
+											sx={{
+												width: 40,
+												height: 40,
+												objectFit: "contain",
+												borderRadius: theme.shape.borderRadius,
+											}}
+										/>
+									) : null}
+									<Typography fontWeight={600}>{appName}</Typography>
+								</Stack>
+							</Stack>
+						}
+						rightContent={
+							<Stack gap={theme.spacing(LAYOUT.MD)}>
+								<Controller
+									name="appName"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<TextField
+											{...field}
+											value={field.value ?? ""}
+											fieldLabel={t("pages.settings.form.branding.option.name.label")}
+											placeholder={t(
+												"pages.settings.form.branding.option.name.placeholder"
+											)}
+											error={!!fieldState.error}
+											helperText={fieldState.error?.message}
+										/>
+									)}
+								/>
+								<Controller
+									name="appLogo"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Stack gap={theme.spacing(LAYOUT.XS)}>
+											<FieldLabel>
+												{t("pages.settings.form.branding.option.logo.label")}
+											</FieldLabel>
+											<ImageUpload
+												src={field.value || undefined}
+												accept={["svg", "png", "jpg", "jpeg", "webp"]}
+												maxSize={400 * 1024}
+												error={fieldState.error?.message}
+												onChange={async (fileObject) => {
+													if (!fileObject) {
+														field.onChange("");
+														form.setValue("appLogo", "", {
+															shouldDirty: true,
+															shouldValidate: true,
+														});
+														return;
+													}
+
+													try {
+														const dataUrl = await fileToDataUrl(fileObject.file);
+														field.onChange(dataUrl);
+														form.setValue("appLogo", dataUrl, {
+															shouldDirty: true,
+															shouldValidate: true,
+														});
+													} catch {
+														toastError(
+															t("pages.settings.form.branding.option.logo.readError")
+														);
+													}
+												}}
+											/>
+											<Typography
+												variant="caption"
+												color="text.secondary"
+											>
+												{t("pages.settings.form.branding.option.logo.helper")}
+											</Typography>
+										</Stack>
+									)}
+								/>
+							</Stack>
+						}
+					/>
+				)}
 				{isAdmin && (
-					<ConfigBox
+					<SettingsSection
 						title={t("pages.settings.form.pagespeed.title")}
 						subtitle={t("pages.settings.form.pagespeed.description")}
 						rightContent={
@@ -399,7 +613,7 @@ export const SettingsPage = () => {
 				)}
 
 				{/* URL Settings */}
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.url.title")}
 					subtitle={t("pages.settings.form.url.description")}
 					rightContent={
@@ -432,7 +646,7 @@ export const SettingsPage = () => {
 
 				{/* Clear All Stats */}
 				{isAdmin && (
-					<ConfigBox
+					<SettingsSection
 						title={t("pages.settings.form.stats.title")}
 						subtitle={t("pages.settings.form.stats.description")}
 						rightContent={
@@ -449,7 +663,7 @@ export const SettingsPage = () => {
 
 				{/* Check Retention */}
 				{isAdmin && (
-					<ConfigBox
+					<SettingsSection
 						title={t("pages.settings.form.retention.title")}
 						subtitle={t("pages.settings.form.retention.description")}
 						rightContent={
@@ -486,7 +700,7 @@ export const SettingsPage = () => {
 
 				{/* Global Thresholds */}
 				{isAdmin && (
-					<ConfigBox
+					<SettingsSection
 						title={t("pages.settings.form.thresholds.title")}
 						subtitle={t("pages.settings.form.thresholds.description")}
 						rightContent={
@@ -569,7 +783,7 @@ export const SettingsPage = () => {
 
 			{/* Email Settings - Admin Only */}
 			{isAdmin && (
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.email.title")}
 					subtitle={t("pages.settings.form.email.description")}
 					leftContent={
@@ -893,9 +1107,186 @@ export const SettingsPage = () => {
 				/>
 			)}
 
+			{/* LDAP Settings - Admin Only */}
+			{isAdmin && (
+				<SettingsSection
+					title={t("pages.settings.form.ldap.title")}
+					subtitle={t("pages.settings.form.ldap.description")}
+					rightContent={
+						<Stack gap={theme.spacing(LAYOUT.MD)}>
+							<Controller
+								name="ldapEnabled"
+								control={form.control}
+								render={({ field }) => (
+									<Box
+										display="flex"
+										alignItems="center"
+										justifyContent="space-between"
+									>
+										<Typography>
+											{t("pages.settings.form.ldap.option.enabled.label")}
+										</Typography>
+										<SwitchComponent
+											checked={field.value ?? false}
+											onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+												field.onChange(e.target.checked)
+											}
+										/>
+									</Box>
+								)}
+							/>
+							<Controller
+								name="ldapUrl"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.url.label")}
+										placeholder={t("pages.settings.form.ldap.option.url.placeholder")}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="ldapBindDn"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.bindDn.label")}
+										placeholder={t("pages.settings.form.ldap.option.bindDn.placeholder")}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message}
+									/>
+								)}
+							/>
+							{isLdapBindPasswordSet && !ldapBindPasswordHasBeenReset ? (
+								<Box>
+									<FieldLabel>
+										{t("pages.settings.form.ldap.option.bindPassword.labelSet")}
+									</FieldLabel>
+									<Button
+										variant="contained"
+										color="error"
+										size="small"
+										onClick={handleResetLdapBindPassword}
+									>
+										{t("common.buttons.reset")}
+									</Button>
+								</Box>
+							) : (
+								<Controller
+									name="ldapBindPassword"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<TextField
+											{...field}
+											value={field.value ?? ""}
+											fieldLabel={t("pages.settings.form.ldap.option.bindPassword.label")}
+											type="password"
+											placeholder={t(
+												"pages.settings.form.ldap.option.bindPassword.placeholder"
+											)}
+											error={!!fieldState.error}
+											helperText={fieldState.error?.message}
+										/>
+									)}
+								/>
+							)}
+							<Controller
+								name="ldapBaseDn"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.baseDn.label")}
+										placeholder={t("pages.settings.form.ldap.option.baseDn.placeholder")}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="ldapUserSearchFilter"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.searchFilter.label")}
+										placeholder={t(
+											"pages.settings.form.ldap.option.searchFilter.placeholder"
+										)}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="ldapGroupAttribute"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.groupAttribute.label")}
+										placeholder={t(
+											"pages.settings.form.ldap.option.groupAttribute.placeholder"
+										)}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="ldapAdminGroupDn"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.adminGroupDn.label")}
+										placeholder={t(
+											"pages.settings.form.ldap.option.adminGroupDn.placeholder"
+										)}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message}
+									/>
+								)}
+							/>
+							<Controller
+								name="ldapRoleMappings"
+								control={form.control}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										value={field.value ?? ""}
+										fieldLabel={t("pages.settings.form.ldap.option.roleMappings.label")}
+										placeholder={t(
+											"pages.settings.form.ldap.option.roleMappings.placeholder"
+										)}
+										multiline
+										minRows={4}
+										error={!!fieldState.error}
+										helperText={
+											fieldState.error?.message ||
+											t("pages.settings.form.ldap.option.roleMappings.helper")
+										}
+									/>
+								)}
+							/>
+						</Stack>
+					}
+				/>
+			)}
+
 			{/* Demo Monitors - Admin Only */}
 			{isAdmin && (
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.demoMonitors.title")}
 					subtitle={t("pages.settings.form.demoMonitors.description")}
 					rightContent={
@@ -916,7 +1307,7 @@ export const SettingsPage = () => {
 
 			{/* Remove All Monitors - Admin Only */}
 			{isAdmin && (
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.removeMonitors.title")}
 					subtitle={t("pages.settings.form.removeMonitors.description")}
 					rightContent={
@@ -936,7 +1327,7 @@ export const SettingsPage = () => {
 
 			{/* Export Monitors - Admin Only */}
 			{isAdmin && (
-				<ConfigBox
+				<SettingsSection
 					title={t("pages.settings.form.importExportMonitors.title")}
 					subtitle={t("pages.settings.form.importExportMonitors.description")}
 					rightContent={
@@ -970,13 +1361,13 @@ export const SettingsPage = () => {
 			)}
 
 			{/* About */}
-			<ConfigBox
+			<SettingsSection
 				title={t("pages.settings.form.about.title")}
 				subtitle=""
 				rightContent={
 					<Stack spacing={2}>
 						<Typography variant="body1">
-							{t("common.appName")} {__APP_VERSION__}
+							{appName} {__APP_VERSION__}
 						</Typography>
 						<Typography
 							variant="body2"

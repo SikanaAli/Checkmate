@@ -6,6 +6,7 @@ export interface IUsersRepository {
 	findByEmail(email: string): Promise<User>;
 	findById(id: string): Promise<User>;
 	findAll(): Promise<User[]>;
+	findFirstSuperAdmin(): Promise<User | null>;
 	// update
 	updateById(id: string, patch: Partial<User>, file?: Express.Multer.File | null): Promise<User>;
 	// delete

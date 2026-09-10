@@ -22,6 +22,14 @@ export interface SettingsThresholds {
 	temperature?: number;
 }
 
+export const LdapAssignableRoles = ["user", "admin", "superadmin"] as const;
+export type LdapAssignableRole = (typeof LdapAssignableRoles)[number];
+
+export interface LdapRoleMapping {
+	role: LdapAssignableRole;
+	groupDn: string;
+}
+
 export type SettingsUpdate = {
 	[K in keyof Settings]?: Settings[K] | null;
 };
@@ -30,6 +38,8 @@ export interface Settings {
 	id: string;
 	checkTTL: number;
 	language: string;
+	appName?: string;
+	appLogo?: string;
 	jwtSecret?: string;
 	pagespeedApiKey?: string;
 	systemEmailHost?: string;
@@ -45,6 +55,15 @@ export interface Settings {
 	systemEmailIgnoreTLS: boolean;
 	systemEmailRequireTLS: boolean;
 	systemEmailRejectUnauthorized: boolean;
+	ldapEnabled: boolean;
+	ldapUrl?: string;
+	ldapBindDn?: string;
+	ldapBindPassword?: string;
+	ldapBaseDn?: string;
+	ldapUserSearchFilter?: string;
+	ldapGroupAttribute?: string;
+	ldapAdminGroupDn?: string;
+	ldapRoleMappings?: LdapRoleMapping[];
 	showURL: boolean;
 	singleton: boolean;
 	version: number;

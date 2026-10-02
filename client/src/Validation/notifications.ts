@@ -93,6 +93,22 @@ const jasminSmsSchema = baseSchema.extend({
 	jasminReportId: z.string().optional(),
 });
 
+const kamexSchema = baseSchema.extend({
+	type: z.literal("kamex"),
+	phone: z.string().min(1, "At least one recipient phone number is required"),
+	kamexHost: z.string().min(1, "Host is required"),
+	kamexPort: z.number().int().min(1).max(65535),
+	kamexPath: z.string().min(1, "Path is required"),
+	kamexApiKey: z.string().optional(),
+	kamexCoding: z.number().int().min(0),
+	kamexCharset: z.string().min(1, "Charset is required"),
+	kamexFrom: z.string().min(1, "Sender is required"),
+	kamexDlrMask: z.number().int().min(0).optional(),
+	kamexDlrUrl: z
+		.union([z.string().url("Please enter a valid URL"), z.literal("")])
+		.optional(),
+});
+
 export const notificationSchema = z
 	.discriminatedUnion("type", [
 		emailSchema,
@@ -107,6 +123,7 @@ export const notificationSchema = z
 		twilioSchema,
 		ntfySchema,
 		jasminSmsSchema,
+		kamexSchema,
 	])
 	.superRefine((data, ctx) => {
 		if (data.type !== "jasmin_sms" || !data.jasminDlrEnabled) {

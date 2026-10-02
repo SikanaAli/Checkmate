@@ -30,7 +30,23 @@ export const HttpStatusCodes = [
 export const HttpStatusCodeSet = new Set(HttpStatusCodes);
 export type HttpStatusCode = number;
 
-export const MonitorTypes = ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"] as const;
+export const DatabaseMonitorTypes = ["mysql", "mssql", "postgres", "mongodb", "oracle"] as const;
+export type DatabaseMonitorType = (typeof DatabaseMonitorTypes)[number];
+
+export const MonitorTypes = [
+	"http",
+	"ping",
+	"pagespeed",
+	"hardware",
+	"docker",
+	"port",
+	"game",
+	"grpc",
+	"websocket",
+	"dns",
+	...DatabaseMonitorTypes,
+	"unknown",
+] as const;
 export type MonitorType = (typeof MonitorTypes)[number];
 
 export const PageSpeedStrategies = ["desktop", "mobile"] as const;
@@ -49,11 +65,16 @@ export const UptimeDetailsSupportedTypes = [
 	"grpc",
 	"websocket",
 	"dns",
+	"mysql",
+	"mssql",
+	"postgres",
+	"mongodb",
+	"oracle",
 ] as const satisfies readonly MonitorType[];
 export type UptimeDetailsSupportedType = (typeof UptimeDetailsSupportedTypes)[number];
 export const supportsUptimeDetails = (type: MonitorType): type is UptimeDetailsSupportedType => UptimeDetailsSupportedTypes.some((t) => t === type);
 
-export const MonitorStatuses = ["up", "down", "paused", "initializing", "maintenance", "breached"] as const;
+export const MonitorStatuses = ["up", "down", "paused", "initializing", "maintenance", "breached", "degraded"] as const;
 export type MonitorStatus = (typeof MonitorStatuses)[number];
 
 export const MonitorMatchMethods = ["equal", "include", "regex"] as const;
@@ -86,6 +107,7 @@ export interface Monitor {
 	matchMethod?: MonitorMatchMethod;
 	url: string;
 	port?: number;
+	parentMonitorId?: string | null;
 	isActive: boolean;
 	interval: number;
 	uptimePercentage?: number;
@@ -111,6 +133,14 @@ export interface Monitor {
 	geoCheckInterval?: number;
 	dnsServer?: string;
 	dnsRecordType?: DnsRecordType;
+	dbName?: string;
+	dbUsername?: string;
+	dbPassword?: string;
+	dbQuery?: string;
+	dbUseSsl?: boolean;
+	groupStatus?: MonitorStatus;
+	childMonitorIds?: string[];
+	childStatusSummary?: MonitorsSummary;
 	recentChecks: CheckSnapshot[];
 	createdAt: string;
 	updatedAt: string;
@@ -125,6 +155,7 @@ export interface MonitorsSummary {
 	initializingMonitors: number;
 	maintenanceMonitors: number;
 	breachedMonitors: number;
+	degradedMonitors: number;
 }
 
 export interface MonitorsWithChecksByTeamIdResult {

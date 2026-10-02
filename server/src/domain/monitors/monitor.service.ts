@@ -27,12 +27,23 @@ import { IJobScheduler } from "@/worker/worker.interface.js";
 const SERVICE_NAME = "MonitorService";
 type DateRangeKey = "recent" | "day" | "week" | "month" | "all";
 
+const normalizeMonitorPatch = (body: Partial<Monitor>): Partial<Monitor> => {
+	const normalized = { ...body };
+	if (normalized.parentMonitorId === "") {
+		normalized.parentMonitorId = null;
+	}
+	if (normalized.dbPassword === "") {
+		delete normalized.dbPassword;
+	}
+	return normalized;
+};
+
 const isUptimeChecksResult = (result: UptimeChecksResult | HardwareChecksResult | PageSpeedChecksResult): result is UptimeChecksResult =>
 	supportsUptimeDetails(result.monitorType);
 
 export interface IMonitorService {
 	// create
-	createMonitor(teamId: string, userId: string, body: Partial<Monitor>): Promise<void>;
+	createMonitor(teamId: string, userId: string, body: Partial<Monitor>): Promise<Monitor>;
 	createMonitors(monitors: Array<Monitor>): Promise<Monitor[] | null>;
 	addDemoMonitors(args: { userId: string; teamId: string }): Promise<Monitor[]>;
 
@@ -158,13 +169,14 @@ export class MonitorService implements IMonitorService {
 		return formatLookup[dateRange];
 	};
 
-	createMonitor = async (teamId: string, userId: string, body: Monitor): Promise<void> => {
-		const monitor = await this.monitorsRepository.create(body, teamId, userId);
+	createMonitor = async (teamId: string, userId: string, body: Monitor): Promise<Monitor> => {
+		const monitor = await this.monitorsRepository.create(normalizeMonitorPatch(body) as Monitor, teamId, userId);
 		if (!monitor) {
 			throw new AppError({ message: "Failed to create monitor", status: 500, service: SERVICE_NAME, method: "createMonitor" });
 		}
 
 		this.scheduler.addJob(monitor.id, monitor);
+		return monitor;
 	};
 
 	createMonitors = async (monitors: Array<Monitor>): Promise<Monitor[] | null> => {
@@ -416,7 +428,7 @@ export class MonitorService implements IMonitorService {
 	};
 
 	editMonitor = async ({ teamId, monitorId, body }: { teamId: string; monitorId: string; body: Partial<Monitor> }) => {
-		const editedMonitor = await this.monitorsRepository.updateById(monitorId, teamId, body);
+		const editedMonitor = await this.monitorsRepository.updateById(monitorId, teamId, normalizeMonitorPatch(body));
 		await this.scheduler.updateJob(editedMonitor);
 		return editedMonitor;
 	};

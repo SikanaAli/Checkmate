@@ -111,6 +111,21 @@ export const notificationBodyValidationOptions = [
 		jasminAccountId: z.union([z.string(), z.literal("")]).optional(),
 		jasminReportId: z.union([z.string(), z.literal("")]).optional(),
 	}),
+	// Kamex SMS notification
+	z.object({
+		notificationName: z.string().min(1, "Notification name is required"),
+		type: z.literal("kamex"),
+		phone: z.string().min(1, "At least one recipient phone number is required"),
+		kamexHost: z.string().min(1, "Host is required"),
+		kamexPort: z.coerce.number().int().min(1).max(65535),
+		kamexPath: z.string().min(1, "Path is required"),
+		kamexApiKey: z.string().min(1, "API key is required"),
+		kamexCoding: z.coerce.number().int().min(0),
+		kamexCharset: z.string().min(1, "Charset is required"),
+		kamexFrom: z.string().min(1, "Sender is required"),
+		kamexDlrMask: z.coerce.number().int().min(0).optional(),
+		kamexDlrUrl: z.union([z.url({ message: "Please enter a valid DLR URL" }), z.literal("")]).optional(),
+	}),
 ] as const;
 
 export const createNotificationBodyValidation = z.discriminatedUnion("type", notificationBodyValidationOptions).superRefine((data, ctx) => {
@@ -127,6 +142,52 @@ export const createNotificationBodyValidation = z.discriminatedUnion("type", not
 		ctx.addIssue({ code: "custom", message: "DLR level is required when DLR is enabled", path: ["jasminDlrLevel"] });
 	}
 });
+
+const updateKamexNotificationBodyValidation = z.object({
+	notificationName: z.string().min(1, "Notification name is required"),
+	type: z.literal("kamex"),
+	phone: z.string().min(1, "At least one recipient phone number is required"),
+	kamexHost: z.string().min(1, "Host is required"),
+	kamexPort: z.coerce.number().int().min(1).max(65535),
+	kamexPath: z.string().min(1, "Path is required"),
+	kamexApiKey: z.union([z.string(), z.literal("")]).optional(),
+	kamexCoding: z.coerce.number().int().min(0),
+	kamexCharset: z.string().min(1, "Charset is required"),
+	kamexFrom: z.string().min(1, "Sender is required"),
+	kamexDlrMask: z.coerce.number().int().min(0).optional(),
+	kamexDlrUrl: z.union([z.url({ message: "Please enter a valid DLR URL" }), z.literal("")]).optional(),
+});
+
+export const updateNotificationBodyValidation = z
+	.discriminatedUnion("type", [
+		notificationBodyValidationOptions[0],
+		notificationBodyValidationOptions[1],
+		notificationBodyValidationOptions[2],
+		notificationBodyValidationOptions[3],
+		notificationBodyValidationOptions[4],
+		notificationBodyValidationOptions[5],
+		notificationBodyValidationOptions[6],
+		notificationBodyValidationOptions[7],
+		notificationBodyValidationOptions[8],
+		notificationBodyValidationOptions[9],
+		notificationBodyValidationOptions[10],
+		notificationBodyValidationOptions[11],
+		updateKamexNotificationBodyValidation,
+	])
+	.superRefine((data, ctx) => {
+		if (data.type !== "jasmin_sms" || !data.jasminDlrEnabled) {
+			return;
+		}
+		if (!data.jasminDlrMethod) {
+			ctx.addIssue({ code: "custom", message: "DLR method is required when DLR is enabled", path: ["jasminDlrMethod"] });
+		}
+		if (!data.jasminDlrUrl) {
+			ctx.addIssue({ code: "custom", message: "DLR URL is required when DLR is enabled", path: ["jasminDlrUrl"] });
+		}
+		if (data.jasminDlrLevel === undefined) {
+			ctx.addIssue({ code: "custom", message: "DLR level is required when DLR is enabled", path: ["jasminDlrLevel"] });
+		}
+	});
 
 export const testNotificationBodyValidation = createNotificationBodyValidation;
 

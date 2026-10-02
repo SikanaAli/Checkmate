@@ -47,6 +47,7 @@ import {
 	DefaultPageSpeedStrategy,
 	DefaultHttpMethod,
 	HttpMethods,
+	DatabaseMonitorTypes,
 } from "@/Types/Monitor";
 import type { Notification } from "@/Types/Notification";
 import type { Tag } from "@/Types/Tag";
@@ -69,6 +70,7 @@ interface GeneralSettingsConfig {
 	showStrategy: boolean;
 	showDnsServer: boolean;
 	showDnsRecordType: boolean;
+	showDatabaseFields?: boolean;
 }
 
 const getGeneralSettingsConfig = (
@@ -216,6 +218,89 @@ const getGeneralSettingsConfig = (
 			showDnsServer: true,
 			showDnsRecordType: true,
 		},
+		mysql: {
+			urlLabel: t("pages.createMonitor.form.general.option.databaseHost.label"),
+			urlPlaceholder: t(
+				"pages.createMonitor.form.general.option.databaseHost.placeholder"
+			),
+			namePlaceholder: t("pages.createMonitor.form.general.option.name.placeholder"),
+			showUrl: true,
+			showPort: true,
+			showGameSelect: false,
+			showSecret: false,
+			showGrpcServiceName: false,
+			showIgnoreTls: true,
+			showStrategy: false,
+			showDnsServer: false,
+			showDnsRecordType: false,
+			showDatabaseFields: true,
+		},
+		mssql: {
+			urlLabel: t("pages.createMonitor.form.general.option.databaseHost.label"),
+			urlPlaceholder: t(
+				"pages.createMonitor.form.general.option.databaseHost.placeholder"
+			),
+			namePlaceholder: t("pages.createMonitor.form.general.option.name.placeholder"),
+			showUrl: true,
+			showPort: true,
+			showGameSelect: false,
+			showSecret: false,
+			showGrpcServiceName: false,
+			showIgnoreTls: true,
+			showStrategy: false,
+			showDnsServer: false,
+			showDnsRecordType: false,
+			showDatabaseFields: true,
+		},
+		postgres: {
+			urlLabel: t("pages.createMonitor.form.general.option.databaseHost.label"),
+			urlPlaceholder: t(
+				"pages.createMonitor.form.general.option.databaseHost.placeholder"
+			),
+			namePlaceholder: t("pages.createMonitor.form.general.option.name.placeholder"),
+			showUrl: true,
+			showPort: true,
+			showGameSelect: false,
+			showSecret: false,
+			showGrpcServiceName: false,
+			showIgnoreTls: true,
+			showStrategy: false,
+			showDnsServer: false,
+			showDnsRecordType: false,
+			showDatabaseFields: true,
+		},
+		mongodb: {
+			urlLabel: t("pages.createMonitor.form.general.option.databaseHost.label"),
+			urlPlaceholder: t("pages.createMonitor.form.general.option.mongoHost.placeholder"),
+			namePlaceholder: t("pages.createMonitor.form.general.option.name.placeholder"),
+			showUrl: true,
+			showPort: true,
+			showGameSelect: false,
+			showSecret: false,
+			showGrpcServiceName: false,
+			showIgnoreTls: true,
+			showStrategy: false,
+			showDnsServer: false,
+			showDnsRecordType: false,
+			showDatabaseFields: true,
+		},
+		oracle: {
+			urlLabel: t("pages.createMonitor.form.general.option.databaseHost.label"),
+			urlPlaceholder: t(
+				"pages.createMonitor.form.general.option.databaseHost.placeholder"
+			),
+			namePlaceholder: t("pages.createMonitor.form.general.option.name.placeholder"),
+			showUrl: true,
+			showPort: true,
+			showGameSelect: false,
+			showSecret: false,
+			showGrpcServiceName: false,
+			showIgnoreTls: false,
+			showStrategy: false,
+			showDnsServer: false,
+			showDnsRecordType: false,
+			showDatabaseFields: true,
+		},
 	};
 	return configs[type] || configs.http;
 };
@@ -252,6 +337,7 @@ const CreateMonitorPage = () => {
 	const { data: notifications } = useGet<Notification[]>("/notifications/team");
 	const { data: games } = useGet<GamesMap>("/monitors/games");
 	const { data: tags } = useGet<Tag[]>("/tags/team");
+	const { data: monitors } = useGet<Monitor[]>("/monitors/team");
 
 	const { schema, defaults } = useMonitorForm({
 		data: existingMonitor ?? null,
@@ -277,6 +363,7 @@ const CreateMonitorPage = () => {
 	const watchedMethod = watch("method") as HttpMethod | undefined;
 	const watchedUseAdvancedMatching = watch("useAdvancedMatching") as boolean;
 	const watchGeoCheckEnabled = watch("geoCheckEnabled") as boolean;
+	const isDatabaseMonitor = DatabaseMonitorTypes.includes(watchedType as any);
 
 	// Steps without an advanced section drop it, so the last step is the form's.
 	const totalSteps = monitorStepCount(watchedType);
@@ -442,6 +529,41 @@ const CreateMonitorPage = () => {
 											label={t("pages.common.monitors.monitorTypes.optionDns")}
 											description={t(
 												"pages.createMonitor.form.type.optionDnsDescription"
+											)}
+										/>
+										<RadioWithDescription
+											value="mysql"
+											label={t("pages.common.monitors.monitorTypes.optionMysql")}
+											description={t(
+												"pages.createMonitor.form.type.optionDatabaseDescription"
+											)}
+										/>
+										<RadioWithDescription
+											value="mssql"
+											label={t("pages.common.monitors.monitorTypes.optionMssql")}
+											description={t(
+												"pages.createMonitor.form.type.optionDatabaseDescription"
+											)}
+										/>
+										<RadioWithDescription
+											value="postgres"
+											label={t("pages.common.monitors.monitorTypes.optionPostgres")}
+											description={t(
+												"pages.createMonitor.form.type.optionDatabaseDescription"
+											)}
+										/>
+										<RadioWithDescription
+											value="mongodb"
+											label={t("pages.common.monitors.monitorTypes.optionMongodb")}
+											description={t(
+												"pages.createMonitor.form.type.optionDatabaseDescription"
+											)}
+										/>
+										<RadioWithDescription
+											value="oracle"
+											label={t("pages.common.monitors.monitorTypes.optionOracle")}
+											description={t(
+												"pages.createMonitor.form.type.optionDatabaseDescription"
 											)}
 										/>
 									</RadioGroup>
@@ -690,6 +812,104 @@ const CreateMonitorPage = () => {
 									)}
 								/>
 							)}
+							{generalSettingsConfig.showDatabaseFields && (
+								<>
+									<Controller
+										name="dbName"
+										control={control}
+										render={({ field, fieldState }) => (
+											<TextField
+												{...field}
+												value={field.value ?? ""}
+												type="text"
+												fieldLabel={t(
+													"pages.createMonitor.form.general.option.dbName.label"
+												)}
+												placeholder={t(
+													"pages.createMonitor.form.general.option.dbName.placeholder"
+												)}
+												fullWidth
+												error={!!fieldState.error}
+												helperText={fieldState.error?.message ?? ""}
+											/>
+										)}
+									/>
+									<Controller
+										name="dbUsername"
+										control={control}
+										render={({ field, fieldState }) => (
+											<TextField
+												{...field}
+												value={field.value ?? ""}
+												type="text"
+												fieldLabel={t(
+													"pages.createMonitor.form.general.option.dbUsername.label"
+												)}
+												placeholder={t(
+													"pages.createMonitor.form.general.option.dbUsername.placeholder"
+												)}
+												fullWidth
+												error={!!fieldState.error}
+												helperText={fieldState.error?.message ?? ""}
+											/>
+										)}
+									/>
+									<Controller
+										name="dbPassword"
+										control={control}
+										render={({ field, fieldState }) => (
+											<TextField
+												{...field}
+												value={field.value ?? ""}
+												type="password"
+												fieldLabel={t(
+													"pages.createMonitor.form.general.option.dbPassword.label"
+												)}
+												placeholder={
+													isEditMode
+														? t(
+																"pages.createMonitor.form.general.option.dbPassword.placeholderEdit"
+															)
+														: t(
+																"pages.createMonitor.form.general.option.dbPassword.placeholder"
+															)
+												}
+												fullWidth
+												error={!!fieldState.error}
+												helperText={fieldState.error?.message ?? ""}
+											/>
+										)}
+									/>
+									<Controller
+										name="dbQuery"
+										control={control}
+										render={({ field, fieldState }) => (
+											<TextField
+												{...field}
+												value={field.value ?? ""}
+												type="text"
+												fieldLabel={t(
+													"pages.createMonitor.form.general.option.dbQuery.label"
+												)}
+												placeholder={
+													watchedType === "mongodb"
+														? t(
+																"pages.createMonitor.form.general.option.dbQuery.placeholderMongo"
+															)
+														: t(
+																"pages.createMonitor.form.general.option.dbQuery.placeholderSql"
+															)
+												}
+												fullWidth
+												multiline
+												minRows={2}
+												error={!!fieldState.error}
+												helperText={fieldState.error?.message ?? ""}
+											/>
+										)}
+									/>
+								</>
+							)}
 
 							<Controller
 								name="name"
@@ -780,6 +1000,46 @@ const CreateMonitorPage = () => {
 									</MenuItem>
 								</Select>
 							)}
+						/>
+					}
+				/>
+			)}
+
+			{showStep(1) && (
+				<ConfigBox
+					title={t("pages.createMonitor.form.grouping.title")}
+					subtitle={t("pages.createMonitor.form.grouping.description")}
+					rightContent={
+						<Controller
+							name="parentMonitorId"
+							control={control}
+							render={({ field }) => {
+								const monitorOptions = (monitors ?? [])
+									.filter((monitor) => monitor.id !== monitorId)
+									.map((monitor) => ({
+										...monitor,
+										name: `${monitor.name} (${monitor.type})`,
+									}));
+								const selectedMonitor =
+									monitorOptions.find((monitor) => monitor.id === field.value) ?? null;
+								return (
+									<Autocomplete
+										options={monitorOptions}
+										value={selectedMonitor}
+										getOptionLabel={(option) => option.name}
+										onChange={(
+											_: unknown,
+											newValue: (typeof monitorOptions)[number] | null
+										) => {
+											field.onChange(newValue?.id ?? "");
+										}}
+										isOptionEqualToValue={(option, value) => option.id === value.id}
+										fieldLabel={t(
+											"pages.createMonitor.form.grouping.option.parent.label"
+										)}
+									/>
+								);
+							}}
 						/>
 					}
 				/>
@@ -1088,6 +1348,57 @@ const CreateMonitorPage = () => {
 						}
 					/>
 				)}
+
+			{showStep(2) && isDatabaseMonitor && (
+				<ConfigBox
+					title={t("pages.createMonitor.form.database.title")}
+					subtitle={t("pages.createMonitor.form.database.description")}
+					rightContent={
+						<Stack spacing={theme.spacing(LAYOUT.MD)}>
+							<Controller
+								name="dbUseSsl"
+								control={control}
+								render={({ field }) => (
+									<Stack
+										direction="row"
+										alignItems="center"
+										spacing={theme.spacing(SPACING.LG)}
+									>
+										<Switch
+											checked={field.value ?? false}
+											onChange={(e) => field.onChange(e.target.checked)}
+										/>
+										<Typography>
+											{t("pages.createMonitor.form.database.option.useSsl.label")}
+										</Typography>
+									</Stack>
+								)}
+							/>
+							{watchedType !== "oracle" && (
+								<Controller
+									name="ignoreTlsErrors"
+									control={control}
+									render={({ field }) => (
+										<Stack
+											direction="row"
+											alignItems="center"
+											spacing={theme.spacing(SPACING.LG)}
+										>
+											<Switch
+												checked={field.value ?? false}
+												onChange={(e) => field.onChange(e.target.checked)}
+											/>
+											<Typography>
+												{t("pages.createMonitor.form.database.option.ignoreTls.label")}
+											</Typography>
+										</Stack>
+									)}
+								/>
+							)}
+						</Stack>
+					}
+				/>
+			)}
 
 			{showStep(2) && watchedType === "http" && (
 				<ConfigBox

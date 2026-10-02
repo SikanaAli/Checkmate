@@ -16,9 +16,22 @@ export const MonitorTypes = [
 	"grpc",
 	"websocket",
 	"dns",
+	"mysql",
+	"mssql",
+	"postgres",
+	"mongodb",
+	"oracle",
 	"unknown",
 ] as const;
 export type MonitorType = (typeof MonitorTypes)[number];
+export const DatabaseMonitorTypes = [
+	"mysql",
+	"mssql",
+	"postgres",
+	"mongodb",
+	"oracle",
+] as const;
+export type DatabaseMonitorType = (typeof DatabaseMonitorTypes)[number];
 
 export const DnsRecordTypes = ["A", "AAAA", "CNAME", "MX", "TXT", "NS"] as const;
 export type DnsRecordType = (typeof DnsRecordTypes)[number];
@@ -39,6 +52,7 @@ export const MonitorStatuses = [
 	"initializing",
 	"maintenance",
 	"breached",
+	"degraded",
 ] as const;
 export type MonitorStatus = (typeof MonitorStatuses)[number];
 
@@ -71,6 +85,7 @@ export interface Monitor {
 	method?: HttpMethod;
 	url: string;
 	port?: number;
+	parentMonitorId?: string | null;
 	isActive: boolean;
 	interval: number;
 	uptimePercentage?: number;
@@ -96,6 +111,14 @@ export interface Monitor {
 	geoCheckInterval?: number;
 	dnsServer?: string;
 	dnsRecordType?: DnsRecordType;
+	dbName?: string;
+	dbUsername?: string;
+	dbPassword?: string;
+	dbQuery?: string;
+	dbUseSsl?: boolean;
+	groupStatus?: MonitorStatus;
+	childMonitorIds?: string[];
+	childStatusSummary?: MonitorsSummary;
 	recentChecks: CheckSnapshot[];
 	createdAt: string;
 	updatedAt: string;
@@ -111,6 +134,7 @@ export interface MonitorsSummary {
 	initializingMonitors: number;
 	maintenanceMonitors: number;
 	breachedMonitors: number;
+	degradedMonitors: number;
 }
 
 export interface MonitorsWithChecksResponse {

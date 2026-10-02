@@ -36,7 +36,8 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 		if (!monitor) {
 			throw new AppError({ message: `Monitor with ID ${monitorId} not found`, status: 404 });
 		}
-		return this.toEntity(monitor);
+		const [monitorWithChildren] = await this.attachChildSummaries([this.toEntity(monitor)]);
+		return monitorWithChildren!;
 	};
 
 	findByIdLean = async (monitorId: string): Promise<Monitor | null> => {
@@ -91,13 +92,80 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 		{ $project: { stats: 0 } },
 	];
 
+	private emptySummary = (): MonitorsSummary => ({
+		totalMonitors: 0,
+		upMonitors: 0,
+		downMonitors: 0,
+		pausedMonitors: 0,
+		initializingMonitors: 0,
+		maintenanceMonitors: 0,
+		breachedMonitors: 0,
+		degradedMonitors: 0,
+	});
+
+	private summarizeChildren = (children: Monitor[]): { groupStatus: MonitorStatus; summary: MonitorsSummary; childMonitorIds: string[] } => {
+		const summary = this.emptySummary();
+		for (const child of children) {
+			summary.totalMonitors += 1;
+			if (child.status === "up") summary.upMonitors += 1;
+			if (child.status === "down") summary.downMonitors += 1;
+			if (child.status === "paused") summary.pausedMonitors += 1;
+			if (child.status === "initializing") summary.initializingMonitors += 1;
+			if (child.status === "maintenance") summary.maintenanceMonitors += 1;
+			if (child.status === "breached") summary.breachedMonitors += 1;
+			if (child.status === "degraded") summary.degradedMonitors += 1;
+		}
+
+		const unhealthy = summary.downMonitors + summary.breachedMonitors + summary.degradedMonitors;
+		const groupStatus: MonitorStatus =
+			summary.downMonitors === summary.totalMonitors
+				? "down"
+				: unhealthy > 0 || summary.initializingMonitors > 0 || summary.maintenanceMonitors > 0
+					? "degraded"
+					: "up";
+
+		return { groupStatus, summary, childMonitorIds: children.map((child) => child.id) };
+	};
+
+	private attachChildSummaries = async (monitors: Monitor[]): Promise<Monitor[]> => {
+		if (!monitors.length) {
+			return monitors;
+		}
+
+		const parentObjectIds = monitors.map((monitor) => new mongoose.Types.ObjectId(monitor.id));
+		const childDocs = await MonitorModel.find({ parentMonitorId: { $in: parentObjectIds } });
+		const childEntities = this.mapDocuments(childDocs);
+		const childrenByParent = new Map<string, Monitor[]>();
+
+		for (const child of childEntities) {
+			if (!child.parentMonitorId) continue;
+			const existing = childrenByParent.get(child.parentMonitorId) ?? [];
+			existing.push(child);
+			childrenByParent.set(child.parentMonitorId, existing);
+		}
+
+		return monitors.map((monitor) => {
+			const children = childrenByParent.get(monitor.id) ?? [];
+			if (!children.length) {
+				return monitor;
+			}
+			const { groupStatus, summary, childMonitorIds } = this.summarizeChildren(children);
+			return {
+				...monitor,
+				groupStatus,
+				childStatusSummary: summary,
+				childMonitorIds,
+			};
+		});
+	};
+
 	findByTeamId = async (teamId: string, config: TeamQueryConfig): Promise<Monitor[] | null> => {
 		const { page = 0, rowsPerPage = 0, field = "createdAt", order = "desc" } = config ?? {};
 		const query = this.queryBuilder(config, teamId);
 		const sort = { [field]: order === "asc" ? 1 : -1 } as const;
 		const skip = Math.max(page, 0) * rowsPerPage;
 		const documents = await MonitorModel.find(query).sort(sort).skip(skip).limit(rowsPerPage);
-		return this.mapDocuments(documents);
+		return await this.attachChildSummaries(this.mapDocuments(documents));
 	};
 
 	findByTeamIdWithStats = async (teamId: string, config: TeamQueryConfig): Promise<Monitor[] | null> => {
@@ -116,7 +184,7 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 		];
 
 		const documents = await MonitorModel.aggregate(pipeline);
-		return documents.map((doc) => this.toEntity(doc));
+		return await this.attachChildSummaries(documents.map((doc) => this.toEntity(doc)));
 	};
 
 	findByIds = async (monitorIds: string[]): Promise<Monitor[]> => {
@@ -129,7 +197,7 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 		const pipeline: PipelineStage[] = [{ $match: { _id: { $in: objectIds } } }, ...this.uptimeStatsLookupStages];
 
 		const documents = await MonitorModel.aggregate(pipeline);
-		return documents.map((doc) => this.toEntity(doc));
+		return await this.attachChildSummaries(documents.map((doc) => this.toEntity(doc)));
 	};
 
 	findByIdsWithChecks = async (monitorIds: string[], checksCount: number = 25): Promise<Monitor[]> => {
@@ -193,7 +261,7 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 		];
 
 		const documents = await MonitorModel.aggregate(pipeline);
-		return documents.map((doc) => this.toEntity(doc));
+		return await this.attachChildSummaries(documents.map((doc) => this.toEntity(doc)));
 	};
 
 	findMonitorCountByTeamIdAndType = async (teamId: string, config: TeamQueryConfig): Promise<number> => {
@@ -363,6 +431,11 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 							$cond: [{ $eq: ["$status", "breached"] }, 1, 0],
 						},
 					},
+					degradedMonitors: {
+						$sum: {
+							$cond: [{ $eq: ["$status", "degraded"] }, 1, 0],
+						},
+					},
 				},
 			},
 			{ $project: { _id: 0 } },
@@ -378,6 +451,7 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 				initializingMonitors: 0,
 				maintenanceMonitors: 0,
 				breachedMonitors: 0,
+				degradedMonitors: 0,
 			}
 		);
 	};
@@ -454,6 +528,7 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 			matchMethod: doc.matchMethod ?? undefined,
 			url: doc.url,
 			port: doc.port ?? undefined,
+			parentMonitorId: doc.parentMonitorId ? toStringId(doc.parentMonitorId) : null,
 			isActive: doc.isActive,
 			interval: doc.interval,
 			uptimePercentage: doc.uptimePercentage ?? undefined,
@@ -480,6 +555,11 @@ class MongoMonitorsRepository implements IMonitorsRepository {
 			geoCheckInterval: doc.geoCheckInterval ?? 300000,
 			dnsServer: doc.dnsServer ?? undefined,
 			dnsRecordType: doc.dnsRecordType ?? undefined,
+			dbName: doc.dbName ?? undefined,
+			dbUsername: doc.dbUsername ?? undefined,
+			dbPassword: doc.dbPassword ?? undefined,
+			dbQuery: doc.dbQuery ?? undefined,
+			dbUseSsl: doc.dbUseSsl ?? false,
 			createdAt: toDateString(doc.createdAt),
 			updatedAt: toDateString(doc.updatedAt),
 			lastEvaluatedAt: doc.lastEvaluatedAt,

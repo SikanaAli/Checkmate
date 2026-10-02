@@ -4,6 +4,7 @@ import type { Check, CheckDiskInfo, CheckSnapshot } from "@/domain/checks/check.
 import type { Monitor, MonitorStatus } from "@/domain/monitors/monitor.types.js";
 import type {
 	DockerStatusPayload,
+	DatabaseStatusPayload,
 	GameStatusPayload,
 	GrpcStatusPayload,
 	HardwareStatusPayload,
@@ -35,6 +36,7 @@ export interface IStatusService {
 			| PageSpeedStatusPayload
 			| HardwareStatusPayload
 			| DockerStatusPayload
+			| DatabaseStatusPayload
 			| PortStatusPayload
 			| GameStatusPayload
 			| GrpcStatusPayload
@@ -192,6 +194,7 @@ export class StatusService implements IStatusService {
 			| PageSpeedStatusPayload
 			| HardwareStatusPayload
 			| DockerStatusPayload
+			| DatabaseStatusPayload
 			| PortStatusPayload
 			| GameStatusPayload
 			| GrpcStatusPayload

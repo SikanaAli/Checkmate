@@ -39,7 +39,16 @@ const NotificationsCreatePage = () => {
 		defaultValues: defaults,
 	});
 
-	const { control, watch, reset, handleSubmit, clearErrors, trigger, getValues } = form;
+	const {
+		control,
+		watch,
+		reset,
+		handleSubmit,
+		clearErrors,
+		trigger,
+		getValues,
+		setError,
+	} = form;
 
 	useEffect(() => {
 		reset(defaults);
@@ -78,6 +87,12 @@ const NotificationsCreatePage = () => {
 	}, [watchedType, t]);
 
 	const onSubmit = async (data: NotificationFormData) => {
+		if (data.type === "kamex" && !isEditMode && !data.kamexApiKey) {
+			setError("kamexApiKey", {
+				message: t("pages.notifications.form.kamex.optionApiKeyRequired"),
+			});
+			return;
+		}
 		const result = isEditMode
 			? await patch(`/notifications/${notificationId}`, data)
 			: await post("/notifications", data);
@@ -90,6 +105,12 @@ const NotificationsCreatePage = () => {
 		const isValid = await trigger();
 		if (!isValid) return;
 		const data = getValues();
+		if (data.type === "kamex" && !data.kamexApiKey) {
+			setError("kamexApiKey", {
+				message: t("pages.notifications.form.kamex.optionApiKeyRequired"),
+			});
+			return;
+		}
 		await testPost("/notifications/test", data);
 	};
 
@@ -153,7 +174,8 @@ const NotificationsCreatePage = () => {
 				watchedType !== "pushover" &&
 				watchedType !== "twilio" &&
 				watchedType !== "ntfy" &&
-				watchedType !== "jasmin_sms" && (
+				watchedType !== "jasmin_sms" &&
+				watchedType !== "kamex" && (
 					<ConfigBox
 						title={addressConfig.title}
 						subtitle={addressConfig.description}
@@ -177,6 +199,211 @@ const NotificationsCreatePage = () => {
 						}
 					/>
 				)}
+			{watchedType === "kamex" && (
+				<ConfigBox
+					title={t("pages.notifications.form.kamex.title")}
+					subtitle={t("pages.notifications.form.kamex.description")}
+					rightContent={
+						<Stack spacing={theme.spacing(8)}>
+							<Controller
+								name="kamexHost"
+								control={control}
+								defaultValue={"kamexHost" in defaults ? defaults.kamexHost : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.kamex.optionHost")}
+										placeholder={t("pages.notifications.form.kamex.placeholderHost")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexPort"
+								control={control}
+								defaultValue={"kamexPort" in defaults ? defaults.kamexPort : 13013}
+								render={({ field, fieldState }) => (
+									<TextField
+										name={field.name}
+										value={field.value ?? ""}
+										onBlur={field.onBlur}
+										inputRef={field.ref}
+										onChange={(event) => {
+											const value = event.target.value;
+											field.onChange(value === "" ? undefined : Number(value));
+										}}
+										type="number"
+										fieldLabel={t("pages.notifications.form.kamex.optionPort")}
+										placeholder={t("pages.notifications.form.kamex.placeholderPort")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexPath"
+								control={control}
+								defaultValue={
+									"kamexPath" in defaults ? defaults.kamexPath : "/cgi-bin/sendsms"
+								}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.kamex.optionPath")}
+										placeholder={t("pages.notifications.form.kamex.placeholderPath")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexApiKey"
+								control={control}
+								defaultValue={"kamexApiKey" in defaults ? defaults.kamexApiKey : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="password"
+										fieldLabel={t("pages.notifications.form.kamex.optionApiKey")}
+										placeholder={
+											isEditMode
+												? t("pages.notifications.form.kamex.placeholderApiKeyEdit")
+												: t("pages.notifications.form.kamex.placeholderApiKey")
+										}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="phone"
+								control={control}
+								defaultValue={"phone" in defaults ? defaults.phone : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.kamex.optionRecipients")}
+										placeholder={t(
+											"pages.notifications.form.kamex.placeholderRecipients"
+										)}
+										fullWidth
+										multiline
+										minRows={3}
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexFrom"
+								control={control}
+								defaultValue={"kamexFrom" in defaults ? defaults.kamexFrom : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.kamex.optionFrom")}
+										placeholder={t("pages.notifications.form.kamex.placeholderFrom")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexCoding"
+								control={control}
+								defaultValue={"kamexCoding" in defaults ? defaults.kamexCoding : 2}
+								render={({ field, fieldState }) => (
+									<TextField
+										name={field.name}
+										value={field.value ?? ""}
+										onBlur={field.onBlur}
+										inputRef={field.ref}
+										onChange={(event) => {
+											const value = event.target.value;
+											field.onChange(value === "" ? undefined : Number(value));
+										}}
+										type="number"
+										fieldLabel={t("pages.notifications.form.kamex.optionCoding")}
+										placeholder={t("pages.notifications.form.kamex.placeholderCoding")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexCharset"
+								control={control}
+								defaultValue={
+									"kamexCharset" in defaults ? defaults.kamexCharset : "UTF-8"
+								}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.kamex.optionCharset")}
+										placeholder={t("pages.notifications.form.kamex.placeholderCharset")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexDlrMask"
+								control={control}
+								defaultValue={
+									"kamexDlrMask" in defaults ? defaults.kamexDlrMask : undefined
+								}
+								render={({ field, fieldState }) => (
+									<TextField
+										name={field.name}
+										value={field.value ?? ""}
+										onBlur={field.onBlur}
+										inputRef={field.ref}
+										onChange={(event) => {
+											const value = event.target.value;
+											field.onChange(value === "" ? undefined : Number(value));
+										}}
+										type="number"
+										fieldLabel={t("pages.notifications.form.kamex.optionDlrMask")}
+										placeholder={t("pages.notifications.form.kamex.placeholderDlrMask")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+							<Controller
+								name="kamexDlrUrl"
+								control={control}
+								defaultValue={"kamexDlrUrl" in defaults ? defaults.kamexDlrUrl : ""}
+								render={({ field, fieldState }) => (
+									<TextField
+										{...field}
+										type="text"
+										fieldLabel={t("pages.notifications.form.kamex.optionDlrUrl")}
+										placeholder={t("pages.notifications.form.kamex.placeholderDlrUrl")}
+										fullWidth
+										error={!!fieldState.error}
+										helperText={fieldState.error?.message ?? ""}
+									/>
+								)}
+							/>
+						</Stack>
+					}
+				/>
+			)}
 			{watchedType === "jasmin_sms" && (
 				<ConfigBox
 					title={t("pages.notifications.form.jasminSms.title")}

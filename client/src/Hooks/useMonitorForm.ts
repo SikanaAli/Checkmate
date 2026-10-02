@@ -14,6 +14,7 @@ const getBaseDefaults = (data?: Monitor | null) => ({
 	interval: data?.interval || 60000,
 	notifications: data?.notifications || [],
 	tags: data?.tags || [],
+	parentMonitorId: data?.parentMonitorId || "",
 	statusWindowSize: data?.statusWindowSize || 5,
 	statusWindowThreshold: data?.statusWindowThreshold || 60,
 });
@@ -30,6 +31,17 @@ export const getMonitorDefaults = (
 	data: Monitor | null = null
 ): MonitorFormData => {
 	const base = getBaseDefaults(data);
+	const databaseDefaults = (defaultPort: number) => ({
+		...base,
+		url: data?.url || "",
+		port: data?.port || defaultPort,
+		dbName: data?.dbName || "",
+		dbUsername: data?.dbUsername || "",
+		dbPassword: "",
+		dbQuery: data?.dbQuery || "",
+		dbUseSsl: data?.dbUseSsl || false,
+		ignoreTlsErrors: data?.ignoreTlsErrors || false,
+	});
 
 	let defaults: MonitorFormData;
 
@@ -127,6 +139,36 @@ export const getMonitorDefaults = (
 				url: data?.url || "",
 				dnsServer: data?.dnsServer || "",
 				dnsRecordType: data?.dnsRecordType || "A",
+			};
+			break;
+		case "mysql":
+			defaults = {
+				...databaseDefaults(3306),
+				type: "mysql",
+			};
+			break;
+		case "mssql":
+			defaults = {
+				...databaseDefaults(1433),
+				type: "mssql",
+			};
+			break;
+		case "postgres":
+			defaults = {
+				...databaseDefaults(5432),
+				type: "postgres",
+			};
+			break;
+		case "mongodb":
+			defaults = {
+				...databaseDefaults(27017),
+				type: "mongodb",
+			};
+			break;
+		case "oracle":
+			defaults = {
+				...databaseDefaults(1521),
+				type: "oracle",
 			};
 			break;
 		default:

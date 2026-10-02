@@ -22,7 +22,8 @@ export interface MonitorStatusResponse<
 		| DockerStatusPayload
 		| GameStatusPayload
 		| GrpcStatusPayload
-		| WebSocketStatusPayload,
+		| WebSocketStatusPayload
+		| DatabaseStatusPayload,
 > {
 	monitorId: string;
 	teamId: string;
@@ -121,6 +122,15 @@ export interface DNSStatusPayload {
 	results: unknown;
 }
 
+export interface DatabaseStatusPayload {
+	databaseType: "mysql" | "mssql" | "postgres" | "mongodb" | "oracle";
+	host: string;
+	port?: number;
+	database?: string;
+	query?: string;
+	driver?: string;
+}
+
 export interface MonitorPayloadMap {
 	ping: PingStatusPayload;
 	http: HttpStatusPayload;
@@ -132,6 +142,11 @@ export interface MonitorPayloadMap {
 	grpc: GrpcStatusPayload;
 	websocket: WebSocketStatusPayload;
 	dns: DNSStatusPayload;
+	mysql: DatabaseStatusPayload;
+	mssql: DatabaseStatusPayload;
+	postgres: DatabaseStatusPayload;
+	mongodb: DatabaseStatusPayload;
+	oracle: DatabaseStatusPayload;
 	unknown: unknown;
 }
 

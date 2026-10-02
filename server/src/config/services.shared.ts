@@ -34,6 +34,7 @@ import { PushoverProvider } from "@/domain/notifications/providers/pushover.js";
 import { TwilioProvider } from "@/domain/notifications/providers/twilio.js";
 import { NtfyProvider } from "@/domain/notifications/providers/ntfy.js";
 import { JasminSmsProvider } from "@/domain/notifications/providers/jasminSms.js";
+import { KamexProvider } from "@/domain/notifications/providers/kamex.js";
 
 // Repository interfaces
 import { ISettingsRepository } from "@/domain/app-settings/app-settings-repository.interface.js";
@@ -169,6 +170,7 @@ export const buildShared = async ({
 	const twilioProvider = new TwilioProvider(logger);
 	const ntfyProvider = new NtfyProvider(logger);
 	const jasminSmsProvider = new JasminSmsProvider(logger);
+	const kamexProvider = new KamexProvider(logger);
 
 	const notificationProviders: NotificationProviderRegistry = {
 		webhook: webhookProvider,
@@ -183,6 +185,7 @@ export const buildShared = async ({
 		twilio: twilioProvider,
 		ntfy: ntfyProvider,
 		jasmin_sms: jasminSmsProvider,
+		kamex: kamexProvider,
 	};
 
 	const notificationsService = new NotificationsService({

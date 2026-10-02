@@ -102,6 +102,22 @@ function buildDefaults(data: Notification | null): NotificationFormData {
 			jasminReportId: data.jasminReportId || "",
 		};
 	}
+	if (data?.type === "kamex") {
+		return {
+			type: "kamex",
+			notificationName: data.notificationName || "",
+			phone: data.phone || "",
+			kamexHost: data.kamexHost || "",
+			kamexPort: data.kamexPort ?? 13013,
+			kamexPath: data.kamexPath || "/cgi-bin/sendsms",
+			kamexApiKey: "",
+			kamexCoding: data.kamexCoding ?? 2,
+			kamexCharset: data.kamexCharset || "UTF-8",
+			kamexFrom: data.kamexFrom || "",
+			kamexDlrMask: data.kamexDlrMask,
+			kamexDlrUrl: data.kamexDlrUrl || "",
+		};
+	}
 	// Default: email (covers both data === null and data.type === "email")
 	return {
 		type: "email",

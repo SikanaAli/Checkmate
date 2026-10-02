@@ -97,6 +97,38 @@ const refineHeadMatching = (body: { method?: string; useAdvancedMatching?: boole
 	}
 };
 
+const databaseFields = {
+	dbName: z.union([z.string(), z.literal("")]).optional(),
+	dbUsername: z.union([z.string(), z.literal("")]).optional(),
+	dbPassword: z.union([z.string(), z.literal("")]).optional(),
+	dbQuery: z.union([z.string(), z.literal("")]).optional(),
+	dbUseSsl: z.boolean().optional(),
+};
+
+const databaseMonitorTypes = new Set(["mysql", "mssql", "postgres", "mongodb", "oracle"]);
+
+const refineDatabaseMonitor = (body: { type?: string; port?: number; url?: string }, ctx: z.RefinementCtx) => {
+	if (!body.type || !databaseMonitorTypes.has(body.type)) {
+		return;
+	}
+	if (!body.url) {
+		ctx.addIssue({ code: "custom", path: ["url"], message: "Database host is required" });
+	}
+	if (body.type !== "mongodb" && !body.port) {
+		ctx.addIssue({ code: "custom", path: ["port"], message: "Database port is required" });
+	}
+};
+
+const refineParentMonitor = (body: { _id?: string; parentMonitorId?: string | null }, ctx: z.RefinementCtx) => {
+	if (body._id && body.parentMonitorId && body._id === body.parentMonitorId) {
+		ctx.addIssue({
+			code: "custom",
+			path: ["parentMonitorId"],
+			message: "A monitor cannot be its own parent",
+		});
+	}
+};
+
 export const createMonitorBodyValidation = z
 	.object({
 		_id: z.string().optional(),
@@ -109,6 +141,7 @@ export const createMonitorBodyValidation = z
 		ignoreTlsErrors: z.boolean().default(false),
 		useAdvancedMatching: z.boolean().default(false),
 		port: z.number().optional(),
+		parentMonitorId: z.union([z.string().min(1), z.null(), z.literal("")]).optional(),
 		isActive: z.boolean().optional(),
 		interval: z.number().optional(),
 		cpuAlertThreshold: z.number().optional(),
@@ -133,11 +166,14 @@ export const createMonitorBodyValidation = z
 		geoCheckInterval: z.number().min(300000).optional(),
 		dnsServer: dnsServerValidation.optional(),
 		dnsRecordType: z.enum(DnsRecordTypes).optional(),
+		...databaseFields,
 	})
 	.superRefine(refineDnsHostname)
 	.superRefine(refineStrategyType)
 	.superRefine(refineHeadMatching)
-	.superRefine(refineRegexPattern);
+	.superRefine(refineRegexPattern)
+	.superRefine(refineDatabaseMonitor)
+	.superRefine(refineParentMonitor);
 
 export const editMonitorBodyValidation = z
 	.object({
@@ -159,6 +195,7 @@ export const editMonitorBodyValidation = z
 		matchMethod: z.union([z.enum(MonitorMatchMethods), z.literal("")]).optional(),
 		method: z.enum(HttpMethods).optional(),
 		port: z.number().min(1).max(65535).optional(),
+		parentMonitorId: z.union([z.string().min(1), z.null(), z.literal("")]).optional(),
 		cpuAlertThreshold: z.number().optional(),
 		memoryAlertThreshold: z.number().optional(),
 		diskAlertThreshold: z.number().optional(),
@@ -173,11 +210,14 @@ export const editMonitorBodyValidation = z
 		geoCheckInterval: z.number().min(300000).optional(),
 		dnsServer: dnsServerValidation.optional(),
 		dnsRecordType: z.enum(DnsRecordTypes).optional(),
+		...databaseFields,
 	})
 	.superRefine(refineDnsHostname)
 	.superRefine(refineStrategyType)
 	.superRefine(refineHeadMatching)
-	.superRefine(refineRegexPattern);
+	.superRefine(refineRegexPattern)
+	.superRefine(refineDatabaseMonitor)
+	.superRefine(refineParentMonitor);
 
 export const pauseMonitorParamValidation = z.object({
 	monitorId: z.string().min(1, "Monitor ID is required"),
@@ -220,6 +260,7 @@ const importedMonitorSchema = z
 		method: z.enum(HttpMethods).optional().default("GET"),
 		url: z.string().min(1, "URL is required"),
 		port: z.number().optional(),
+		parentMonitorId: z.union([z.string().min(1), z.null(), z.literal("")]).optional(),
 		isActive: z.boolean().default(true),
 		interval: z.number().default(60000),
 		uptimePercentage: z.number().optional(),
@@ -245,13 +286,16 @@ const importedMonitorSchema = z
 		geoCheckInterval: z.number().min(300000).default(300000),
 		dnsServer: dnsServerValidation.optional(),
 		dnsRecordType: z.enum(DnsRecordTypes).optional(),
+		...databaseFields,
 		createdAt: z.string().optional(),
 		updatedAt: z.string().optional(),
 	})
 	.superRefine(refineDnsHostname)
 	.superRefine(refineStrategyType)
 	.superRefine(refineHeadMatching)
-	.superRefine(refineRegexPattern);
+	.superRefine(refineRegexPattern)
+	.superRefine(refineDatabaseMonitor)
+	.superRefine(refineParentMonitor);
 
 export const importMonitorsBodyValidation = z.object({
 	monitors: z.array(importedMonitorSchema).min(1, "At least one monitor is required"),
@@ -277,6 +321,7 @@ export const monitorResponseSchema = z
 		type: z.enum(MonitorTypes),
 		url: z.string(),
 		port: z.number().optional(),
+		parentMonitorId: z.string().nullable().optional(),
 		isActive: z.boolean(),
 		interval: z.number(),
 		status: z.enum(MonitorStatuses),
@@ -305,6 +350,25 @@ export const monitorResponseSchema = z
 		geoCheckInterval: z.number(),
 		dnsServer: z.string().optional(),
 		dnsRecordType: z.enum(DnsRecordTypes).optional(),
+		dbName: z.string().optional(),
+		dbUsername: z.string().optional(),
+		dbPassword: z.string().optional(),
+		dbQuery: z.string().optional(),
+		dbUseSsl: z.boolean().optional(),
+		groupStatus: z.enum(MonitorStatuses).optional(),
+		childMonitorIds: z.array(z.string()).optional(),
+		childStatusSummary: z
+			.object({
+				totalMonitors: z.number(),
+				upMonitors: z.number(),
+				downMonitors: z.number(),
+				pausedMonitors: z.number(),
+				initializingMonitors: z.number(),
+				maintenanceMonitors: z.number(),
+				breachedMonitors: z.number(),
+				degradedMonitors: z.number(),
+			})
+			.optional(),
 		teamId: z.string(),
 		userId: z.string(),
 		createdAt: z.string(),

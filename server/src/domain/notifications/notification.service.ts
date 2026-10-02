@@ -173,6 +173,9 @@ export class NotificationsService implements INotificationsService {
 	};
 
 	updateById = async (id: string, teamId: string, updateData: Partial<Notification>): Promise<Notification> => {
+		if (updateData.type === "kamex" && !updateData.kamexApiKey) {
+			delete updateData.kamexApiKey;
+		}
 		return await this.notificationsRepository.updateById(id, teamId, updateData);
 	};
 

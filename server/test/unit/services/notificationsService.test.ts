@@ -51,6 +51,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 	const twilioProvider = createProvider();
 	const ntfyProvider = createProvider();
 	const jasminSmsProvider = createProvider();
+	const kamexProvider = createProvider();
 	const settingsService = createSettingsService();
 	const notificationMessageBuilder = createMessageBuilder();
 
@@ -70,6 +71,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 		twilioProvider,
 		ntfyProvider,
 		jasminSmsProvider,
+		kamexProvider,
 		settingsService,
 		notificationMessageBuilder,
 		...overrides,
@@ -91,6 +93,7 @@ const createService = (overrides?: Record<string, unknown>) => {
 			twilio: defaults.twilioProvider,
 			ntfy: defaults.ntfyProvider,
 			jasmin_sms: defaults.jasminSmsProvider,
+			kamex: defaults.kamexProvider,
 		},
 		settingsService: defaults.settingsService,
 		logger: defaults.logger,
@@ -170,6 +173,7 @@ describe("NotificationsService", () => {
 				"twilio",
 				"ntfy",
 				"jasmin_sms",
+				"kamex",
 			] as const;
 			for (const type of types) {
 				const deps = createService();
@@ -190,6 +194,7 @@ describe("NotificationsService", () => {
 					twilio: deps.twilioProvider,
 					ntfy: deps.ntfyProvider,
 					jasmin_sms: deps.jasminSmsProvider,
+					kamex: deps.kamexProvider,
 				};
 				expect(providerMap[type].sendMessage).toHaveBeenCalledTimes(1);
 			}
@@ -276,6 +281,7 @@ describe("NotificationsService", () => {
 			["twilio"],
 			["ntfy"],
 			["jasmin_sms"],
+			["kamex"],
 		] as const)("routes %s to the correct provider", async (type) => {
 			const deps = createService();
 			const notification = makeNotification({ type: type as any });
@@ -296,6 +302,7 @@ describe("NotificationsService", () => {
 				twilio: deps.twilioProvider,
 				ntfy: deps.ntfyProvider,
 				jasmin_sms: deps.jasminSmsProvider,
+				kamex: deps.kamexProvider,
 			};
 			expect(providerMap[type].sendTestAlert).toHaveBeenCalledWith(notification);
 		});

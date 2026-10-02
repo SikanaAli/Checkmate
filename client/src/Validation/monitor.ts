@@ -3,6 +3,7 @@ import type { FieldPath } from "react-hook-form";
 import { GeoContinents } from "@/Types/GeoCheck";
 import {
 	DnsRecordTypes,
+	DatabaseMonitorTypes,
 	HttpMethods,
 	PageSpeedStrategies,
 	type MonitorType,
@@ -30,6 +31,10 @@ const baseSchema = z.object({
 		.register(monitorStepRegistry, { step: 1 }),
 	notifications: z.array(z.string()).register(monitorStepRegistry, { step: 1 }),
 	tags: z.array(z.string()).register(monitorStepRegistry, { step: 1 }),
+	parentMonitorId: z
+		.union([z.string(), z.null(), z.literal("")])
+		.optional()
+		.register(monitorStepRegistry, { step: 1 }),
 	statusWindowSize: z
 		.number({ message: "Status window size is required" })
 		.min(1, "Status window size must be at least 1")
@@ -194,6 +199,32 @@ const dnsSchema = baseSchema.extend({
 	dnsRecordType: z.enum(DnsRecordTypes),
 });
 
+const databaseFields = {
+	url: z.string().min(1, "Database host is required"),
+	port: z
+		.number()
+		.min(1, "Port must be at least 1")
+		.max(65535, "Port must be at most 65535"),
+	dbName: z.string().optional(),
+	dbUsername: z.string().optional(),
+	dbPassword: z.string().optional(),
+	dbQuery: z.string().optional(),
+	dbUseSsl: z.boolean().optional().register(monitorStepRegistry, { step: 2 }),
+	ignoreTlsErrors: z.boolean().optional().register(monitorStepRegistry, { step: 2 }),
+};
+
+const mysqlSchema = baseSchema.extend({ type: z.literal("mysql"), ...databaseFields });
+const mssqlSchema = baseSchema.extend({ type: z.literal("mssql"), ...databaseFields });
+const postgresSchema = baseSchema.extend({
+	type: z.literal("postgres"),
+	...databaseFields,
+});
+const mongodbSchema = baseSchema.extend({
+	type: z.literal("mongodb"),
+	...databaseFields,
+});
+const oracleSchema = baseSchema.extend({ type: z.literal("oracle"), ...databaseFields });
+
 // Discriminated union of all monitor types
 export const monitorSchema = z.discriminatedUnion("type", [
 	httpSchema,
@@ -206,6 +237,11 @@ export const monitorSchema = z.discriminatedUnion("type", [
 	hardwareSchema,
 	websocketSchema,
 	dnsSchema,
+	mysqlSchema,
+	mssqlSchema,
+	postgresSchema,
+	mongodbSchema,
+	oracleSchema,
 ]);
 
 export type MonitorFormData = z.infer<typeof monitorSchema>;
@@ -249,4 +285,9 @@ export {
 	pagespeedSchema,
 	hardwareSchema,
 	websocketSchema,
+	mysqlSchema,
+	mssqlSchema,
+	postgresSchema,
+	mongodbSchema,
+	oracleSchema,
 };

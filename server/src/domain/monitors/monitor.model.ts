@@ -274,6 +274,11 @@ const MonitorSchema = new Schema<MonitorDocument>(
 		port: {
 			type: Number,
 		},
+		parentMonitorId: {
+			type: Schema.Types.ObjectId,
+			ref: "Monitor",
+			default: null,
+		},
 		isActive: {
 			type: Boolean,
 			default: true,
@@ -380,6 +385,22 @@ const MonitorSchema = new Schema<MonitorDocument>(
 			type: String,
 			enum: DnsRecordTypes,
 		},
+		dbName: {
+			type: String,
+		},
+		dbUsername: {
+			type: String,
+		},
+		dbPassword: {
+			type: String,
+		},
+		dbQuery: {
+			type: String,
+		},
+		dbUseSsl: {
+			type: Boolean,
+			default: false,
+		},
 		recentChecks: {
 			type: [checkSnapshotSchema],
 			default: [],
@@ -395,6 +416,7 @@ const MonitorSchema = new Schema<MonitorDocument>(
 );
 
 MonitorSchema.index({ teamId: 1, type: 1 });
+MonitorSchema.index({ teamId: 1, parentMonitorId: 1 });
 
 const MonitorModel = model<MonitorDocument>("Monitor", MonitorSchema);
 

@@ -465,6 +465,7 @@
 				"status": {
 					"down": "down",
 					"breached": "threshold exceeded",
+					"degraded": "degraded",
 					"initializing": "initializing",
 					"maintenance": "maintenance",
 					"paused": "paused",
@@ -481,7 +482,12 @@
 					"optionHardware": "Infrastructure",
 					"optionGrpc": "gRPC",
 					"optionWebSocket": "WebSocket",
-					"optionDns": "DNS"
+					"optionDns": "DNS",
+					"optionMysql": "MySQL",
+					"optionMssql": "MSSQL",
+					"optionPostgres": "PostgreSQL",
+					"optionMongodb": "MongoDB",
+					"optionOracle": "Oracle"
 				}
 			}
 		},
@@ -603,6 +609,31 @@
 								"NS": "NS",
 								"TXT": "TXT"
 							}
+						},
+						"databaseHost": {
+							"label": "Database host",
+							"placeholder": "db.example.com or 10.3.104.20"
+						},
+						"mongoHost": {
+							"placeholder": "mongodb://db.example.com:27017/app or db.example.com"
+						},
+						"dbName": {
+							"label": "Database name / service",
+							"placeholder": "app_db"
+						},
+						"dbUsername": {
+							"label": "Username",
+							"placeholder": "monitor_user"
+						},
+						"dbPassword": {
+							"label": "Password",
+							"placeholder": "Enter database password",
+							"placeholderEdit": "Leave blank to keep the current password"
+						},
+						"dbQuery": {
+							"label": "Health query",
+							"placeholderSql": "Optional, default is SELECT 1",
+							"placeholderMongo": "Optional JSON command, default is { \"ping\": 1 }"
 						}
 					},
 					"title": "General settings",
@@ -616,7 +647,33 @@
 						"grpc": "Enter the hostname and port of the gRPC server, optionally specify a service name for the health check, and add a display name.",
 						"websocket": "Enter the WebSocket URL to monitor (e.g., wss://example.com/socket) and add a display name.",
 						"hardware": "Monitor CPU, memory, disk usage, and temperature for your infrastructure. The Capture endpoint URL must include the full path /api/v1/metrics (e.g. http://192.168.1.10:5001/api/v1/metrics). For the authorization secret, paste only the token string — don't include 'Bearer'.",
-						"dns": "Monitor if a specific DNS server is responding."
+						"dns": "Monitor if a specific DNS server is responding.",
+						"mysql": "Monitor MySQL connectivity and an optional health query.",
+						"mssql": "Monitor Microsoft SQL Server connectivity and an optional health query.",
+						"postgres": "Monitor PostgreSQL connectivity and an optional health query.",
+						"mongodb": "Monitor MongoDB connectivity and an optional JSON command.",
+						"oracle": "Monitor Oracle connectivity and an optional health query."
+					}
+				},
+				"database": {
+					"title": "Database settings",
+					"description": "Configure TLS behavior for database checks.",
+					"option": {
+						"useSsl": {
+							"label": "Use SSL/TLS"
+						},
+						"ignoreTls": {
+							"label": "Allow self-signed or untrusted certificates"
+						}
+					}
+				},
+				"grouping": {
+					"title": "Grouping",
+					"description": "Optionally place this monitor under a parent monitor. Parent monitors show a computed child health summary.",
+					"option": {
+						"parent": {
+							"label": "Parent monitor"
+						}
 					}
 				},
 				"ignoreTls": {
@@ -658,6 +715,7 @@
 					"optionPingDescription": "Use ICMP Ping to monitor if a server is online.",
 					"optionPortDescription": "Monitor if a specific port on a server is open.",
 					"optionDnsDescription": "Monitor if a specific DNS server is responding.",
+					"optionDatabaseDescription": "Monitor database connectivity and an optional health query.",
 					"title": "Type"
 				},
 				"thresholds": {
@@ -1210,6 +1268,32 @@
 					"placeholderDlrUrl": "http://10.3.104.178:8000/dlr/",
 					"optionDlrLevel": "DLR level",
 					"placeholderDlrLevel": "2"
+				},
+				"kamex": {
+					"title": "Kamex SMS configuration",
+					"description": "Configure Kamex sendsms API for SMS notifications.",
+					"optionHost": "Host",
+					"placeholderHost": "10.3.104.149",
+					"optionPort": "Port",
+					"placeholderPort": "13013",
+					"optionPath": "Path",
+					"placeholderPath": "/cgi-bin/sendsms",
+					"optionApiKey": "API key",
+					"optionApiKeyRequired": "API key is required",
+					"placeholderApiKey": "Enter the Kamex API key",
+					"placeholderApiKeyEdit": "Leave blank to keep the current API key",
+					"optionRecipients": "Recipient numbers",
+					"placeholderRecipients": "260950003956, 260950003935",
+					"optionFrom": "Sender",
+					"placeholderFrom": "260344",
+					"optionCoding": "Coding",
+					"placeholderCoding": "2",
+					"optionCharset": "Charset",
+					"placeholderCharset": "UTF-8",
+					"optionDlrMask": "DLR mask",
+					"placeholderDlrMask": "Optional, e.g. 31",
+					"optionDlrUrl": "DLR URL",
+					"placeholderDlrUrl": "Optional, e.g. http://10.3.104.200:3900?dlr=%d&status=%A"
 				}
 			},
 			"table": {

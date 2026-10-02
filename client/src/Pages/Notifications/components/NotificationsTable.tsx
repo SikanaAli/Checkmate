@@ -72,10 +72,11 @@ export const NotificationsTable = ({
 				id: "destination",
 				content: t("pages.notifications.table.headers.destination"),
 				render: (row) => {
+					const destination = row?.address || row?.kamexHost || row?.phone;
 					return (
 						<Box sx={{ maxWidth: 320, mx: "auto" }}>
 							<Typography
-								title={row?.address}
+								title={destination}
 								sx={{
 									direction: "rtl",
 									textAlign: "left",
@@ -85,7 +86,7 @@ export const NotificationsTable = ({
 									textOverflow: "ellipsis",
 								}}
 							>
-								{row?.address}
+								{destination}
 							</Typography>
 						</Box>
 					);

@@ -22,6 +22,19 @@ import { fetchMonitorCertificate, requireTeamId, requireUserId } from "@/api/con
 import { AppError } from "@/utils/AppError.js";
 import { IMonitorService } from "@/domain/monitors/monitor.service.js";
 import { INotificationsService } from "@/domain/notifications/notification.service.js";
+import type { Monitor, MonitorsWithChecksByTeamIdResult } from "@/domain/monitors/monitor.types.js";
+
+const sanitizeMonitor = (monitor: Monitor): Monitor => {
+	const { dbPassword, ...sanitized } = monitor;
+	return sanitized as Monitor;
+};
+
+const sanitizeMonitorList = (monitors: Monitor[] | null): Monitor[] | null => monitors?.map(sanitizeMonitor) ?? null;
+
+const sanitizeMonitorsWithChecks = (result: MonitorsWithChecksByTeamIdResult): MonitorsWithChecksByTeamIdResult => ({
+	...result,
+	monitors: result.monitors.map(sanitizeMonitor),
+});
 
 export interface IMonitorController {
 	getMonitorCertificate: RequestHandler;
@@ -85,7 +98,13 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Uptime details retrieved successfully",
-			data: data,
+			data: {
+				...data,
+				monitorData: {
+					...data.monitorData,
+					monitor: sanitizeMonitor(data.monitorData.monitor),
+				},
+			},
 		});
 	});
 
@@ -106,7 +125,10 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Hardware details retrieved successfully",
-			data: data,
+			data: {
+				...data,
+				monitor: sanitizeMonitor(data.monitor),
+			},
 		});
 	});
 	getPageSpeedDetailsById = catchAsync(async (req: Request, res: Response) => {
@@ -126,7 +148,13 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Page speed details retrieved successfully",
-			data,
+			data: {
+				...data,
+				monitorData: {
+					...data.monitorData,
+					monitor: sanitizeMonitor(data.monitorData.monitor),
+				},
+			},
 		});
 	});
 
@@ -165,7 +193,7 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Monitor retrieved successfully",
-			data: monitor,
+			data: sanitizeMonitor(monitor),
 		});
 	});
 
@@ -180,7 +208,7 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Monitor created successfully",
-			data: monitor,
+			data: sanitizeMonitor(monitor),
 		});
 	});
 
@@ -234,7 +262,7 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Monitor edited successfully",
-			data: editedMonitor,
+			data: sanitizeMonitor(editedMonitor),
 		});
 	});
 
@@ -301,7 +329,7 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Monitors retrieved successfully",
-			data: monitors,
+			data: sanitizeMonitorList(monitors),
 		});
 	});
 
@@ -332,7 +360,7 @@ class MonitorController implements IMonitorController {
 
 		return res.status(200).json({
 			msg: "Monitors retrieved successfully",
-			data: monitors,
+			data: sanitizeMonitorsWithChecks(monitors),
 		});
 	});
 
@@ -343,7 +371,7 @@ class MonitorController implements IMonitorController {
 		return res.status(200).json({
 			success: true,
 			msg: "Monitors exported successfully",
-			data: json,
+			data: json.map(sanitizeMonitor),
 		});
 	});
 

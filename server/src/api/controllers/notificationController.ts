@@ -8,13 +8,25 @@ import {
 	testNotificationBodyValidation,
 	editNotificationParamValidation,
 	testAllNotificationsBodyValidation,
+	updateNotificationBodyValidation,
 } from "@/api/validation/notificationValidation.js";
 import { AppError } from "@/utils/AppError.js";
 import { INotificationsService } from "@/domain/notifications/notification.service.js";
+import type { Notification } from "@/domain/notifications/notification.type.js";
 import { requireTeamId, requireUserId } from "./controllerUtils.js";
 import { IMonitorsRepository } from "@/domain/monitors/monitor.repository.interface.js";
 
 const SERVICE_NAME = "NotificationController";
+
+const sanitizeNotification = (notification: Notification): Notification => {
+	if (notification.type !== "kamex") {
+		return notification;
+	}
+	const { kamexApiKey, ...sanitized } = notification;
+	return sanitized as Notification;
+};
+
+const sanitizeNotifications = (notifications: Notification[]): Notification[] => notifications.map(sanitizeNotification);
 
 export interface INotificationController {
 	testNotification: RequestHandler;
@@ -54,7 +66,7 @@ class NotificationController implements INotificationController {
 		return res.status(200).json({
 			success: true,
 			msg: "Notification created successfully",
-			data: notification,
+			data: sanitizeNotification(notification),
 		});
 	});
 
@@ -65,7 +77,7 @@ class NotificationController implements INotificationController {
 		return res.status(200).json({
 			success: true,
 			msg: "Notifications fetched successfully",
-			data: notifications,
+			data: sanitizeNotifications(notifications),
 		});
 	});
 
@@ -89,12 +101,12 @@ class NotificationController implements INotificationController {
 		return res.status(200).json({
 			success: true,
 			msg: "Notification fetched successfully",
-			data: notification,
+			data: sanitizeNotification(notification),
 		});
 	});
 
 	editNotification = catchAsync(async (req: Request, res: Response) => {
-		const validatedBody = createNotificationBodyValidation.parse(req.body);
+		const validatedBody = updateNotificationBodyValidation.parse(req.body);
 		const validatedParams = editNotificationParamValidation.parse(req.params);
 
 		const teamId = requireTeamId(req.user?.teamId);
@@ -104,7 +116,7 @@ class NotificationController implements INotificationController {
 		return res.status(200).json({
 			success: true,
 			msg: "Notification updated successfully",
-			data: editedNotification,
+			data: sanitizeNotification(editedNotification),
 		});
 	});
 

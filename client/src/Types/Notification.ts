@@ -11,6 +11,7 @@ export const NotificationChannels = [
 	"twilio",
 	"ntfy",
 	"jasmin_sms",
+	"kamex",
 ] as const;
 export type NotificationChannel = (typeof NotificationChannels)[number];
 
@@ -38,6 +39,15 @@ export interface Notification {
 	jasminDlrLevel?: number;
 	jasminAccountId?: string;
 	jasminReportId?: string;
+	kamexHost?: string;
+	kamexPort?: number;
+	kamexPath?: string;
+	kamexApiKey?: string;
+	kamexCoding?: number;
+	kamexCharset?: string;
+	kamexFrom?: string;
+	kamexDlrMask?: number;
+	kamexDlrUrl?: string;
 	createdAt: string;
 	updatedAt: string;
 }

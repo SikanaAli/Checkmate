@@ -88,6 +88,23 @@ const notificationVariantMeta: Record<string, { component: string; example: Reco
 			jasminAccountId: "344-test",
 		},
 	},
+	kamex: {
+		component: "KamexNotification",
+		example: {
+			notificationName: "Kamex SMS",
+			type: "kamex",
+			phone: "260950003956,260950003935",
+			kamexHost: "10.3.104.149",
+			kamexPort: 13013,
+			kamexPath: "/cgi-bin/sendsms",
+			kamexApiKey: "set-on-create-or-update",
+			kamexCoding: 2,
+			kamexCharset: "UTF-8",
+			kamexFrom: "260344",
+			kamexDlrMask: 31,
+			kamexDlrUrl: "http://10.3.104.200:3900?dlr=%d&status=%A",
+		},
+	},
 };
 
 const decoratedVariants = notificationBodyValidationOptions.map((variant) => {

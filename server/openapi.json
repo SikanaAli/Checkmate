@@ -346,13 +346,34 @@
 					},
 					"type": {
 						"type": "string",
-						"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+						"enum": [
+							"http",
+							"ping",
+							"pagespeed",
+							"hardware",
+							"docker",
+							"port",
+							"game",
+							"grpc",
+							"websocket",
+							"dns",
+							"mysql",
+							"mssql",
+							"postgres",
+							"mongodb",
+							"oracle",
+							"unknown"
+						]
 					},
 					"url": {
 						"type": "string"
 					},
 					"port": {
 						"type": "number"
+					},
+					"parentMonitorId": {
+						"type": "string",
+						"nullable": true
 					},
 					"isActive": {
 						"type": "boolean"
@@ -362,7 +383,7 @@
 					},
 					"status": {
 						"type": "string",
-						"enum": ["up", "down", "paused", "initializing", "maintenance", "breached"]
+						"enum": ["up", "down", "paused", "initializing", "maintenance", "breached", "degraded"]
 					},
 					"statusWindowSize": {
 						"type": "number"
@@ -458,6 +479,70 @@
 					"dnsRecordType": {
 						"type": "string",
 						"enum": ["A", "AAAA", "CNAME", "MX", "TXT", "NS"]
+					},
+					"dbName": {
+						"type": "string"
+					},
+					"dbUsername": {
+						"type": "string"
+					},
+					"dbPassword": {
+						"type": "string"
+					},
+					"dbQuery": {
+						"type": "string"
+					},
+					"dbUseSsl": {
+						"type": "boolean"
+					},
+					"groupStatus": {
+						"type": "string",
+						"enum": ["up", "down", "paused", "initializing", "maintenance", "breached", "degraded"]
+					},
+					"childMonitorIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"childStatusSummary": {
+						"type": "object",
+						"properties": {
+							"totalMonitors": {
+								"type": "number"
+							},
+							"upMonitors": {
+								"type": "number"
+							},
+							"downMonitors": {
+								"type": "number"
+							},
+							"pausedMonitors": {
+								"type": "number"
+							},
+							"initializingMonitors": {
+								"type": "number"
+							},
+							"maintenanceMonitors": {
+								"type": "number"
+							},
+							"breachedMonitors": {
+								"type": "number"
+							},
+							"degradedMonitors": {
+								"type": "number"
+							}
+						},
+						"required": [
+							"totalMonitors",
+							"upMonitors",
+							"downMonitors",
+							"pausedMonitors",
+							"initializingMonitors",
+							"maintenanceMonitors",
+							"breachedMonitors",
+							"degradedMonitors"
+						]
 					},
 					"teamId": {
 						"type": "string"
@@ -573,6 +658,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/JasminSmsNotification"
+					},
+					{
+						"$ref": "#/components/schemas/KamexNotification"
 					}
 				],
 				"discriminator": {
@@ -589,7 +677,8 @@
 						"pushover": "#/components/schemas/PushoverNotification",
 						"twilio": "#/components/schemas/TwilioNotification",
 						"ntfy": "#/components/schemas/NtfyNotification",
-						"jasmin_sms": "#/components/schemas/JasminSmsNotification"
+						"jasmin_sms": "#/components/schemas/JasminSmsNotification",
+						"kamex": "#/components/schemas/KamexNotification"
 					}
 				}
 			},
@@ -1150,6 +1239,96 @@
 					"jasminDlrUrl": "http://10.3.104.178:8000/dlr/",
 					"jasminDlrLevel": 2,
 					"jasminAccountId": "344-test"
+				}
+			},
+			"KamexNotification": {
+				"type": "object",
+				"properties": {
+					"notificationName": {
+						"type": "string",
+						"minLength": 1
+					},
+					"type": {
+						"type": "string",
+						"enum": ["kamex"]
+					},
+					"phone": {
+						"type": "string",
+						"minLength": 1
+					},
+					"kamexHost": {
+						"type": "string",
+						"minLength": 1
+					},
+					"kamexPort": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 65535
+					},
+					"kamexPath": {
+						"type": "string",
+						"minLength": 1
+					},
+					"kamexApiKey": {
+						"type": "string",
+						"minLength": 1
+					},
+					"kamexCoding": {
+						"type": "integer",
+						"nullable": true,
+						"minimum": 0
+					},
+					"kamexCharset": {
+						"type": "string",
+						"minLength": 1
+					},
+					"kamexFrom": {
+						"type": "string",
+						"minLength": 1
+					},
+					"kamexDlrMask": {
+						"type": "integer",
+						"nullable": true,
+						"minimum": 0
+					},
+					"kamexDlrUrl": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "uri"
+							},
+							{
+								"type": "string",
+								"enum": [""]
+							}
+						]
+					}
+				},
+				"required": [
+					"notificationName",
+					"type",
+					"phone",
+					"kamexHost",
+					"kamexPort",
+					"kamexPath",
+					"kamexApiKey",
+					"kamexCoding",
+					"kamexCharset",
+					"kamexFrom"
+				],
+				"example": {
+					"notificationName": "Kamex SMS",
+					"type": "kamex",
+					"phone": "260950003956,260950003935",
+					"kamexHost": "10.3.104.149",
+					"kamexPort": 13013,
+					"kamexPath": "/cgi-bin/sendsms",
+					"kamexApiKey": "set-on-create-or-update",
+					"kamexCoding": 2,
+					"kamexCharset": "UTF-8",
+					"kamexFrom": "260344",
+					"kamexDlrMask": 31,
+					"kamexDlrUrl": "http://10.3.104.200:3900?dlr=%d&status=%A"
 				}
 			}
 		},
@@ -3149,7 +3328,24 @@
 					{
 						"schema": {
 							"type": "string",
-							"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+							"enum": [
+								"http",
+								"ping",
+								"pagespeed",
+								"hardware",
+								"docker",
+								"port",
+								"game",
+								"grpc",
+								"websocket",
+								"dns",
+								"mysql",
+								"mssql",
+								"postgres",
+								"mongodb",
+								"oracle",
+								"unknown"
+							]
 						},
 						"required": false,
 						"name": "type",
@@ -3584,7 +3780,24 @@
 					{
 						"schema": {
 							"type": "string",
-							"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+							"enum": [
+								"http",
+								"ping",
+								"pagespeed",
+								"hardware",
+								"docker",
+								"port",
+								"game",
+								"grpc",
+								"websocket",
+								"dns",
+								"mysql",
+								"mssql",
+								"postgres",
+								"mongodb",
+								"oracle",
+								"unknown"
+							]
 						},
 						"required": false,
 						"name": "type",
@@ -5610,13 +5823,47 @@
 							"anyOf": [
 								{
 									"type": "string",
-									"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+									"enum": [
+										"http",
+										"ping",
+										"pagespeed",
+										"hardware",
+										"docker",
+										"port",
+										"game",
+										"grpc",
+										"websocket",
+										"dns",
+										"mysql",
+										"mssql",
+										"postgres",
+										"mongodb",
+										"oracle",
+										"unknown"
+									]
 								},
 								{
 									"type": "array",
 									"items": {
 										"type": "string",
-										"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+										"enum": [
+											"http",
+											"ping",
+											"pagespeed",
+											"hardware",
+											"docker",
+											"port",
+											"game",
+											"grpc",
+											"websocket",
+											"dns",
+											"mysql",
+											"mssql",
+											"postgres",
+											"mongodb",
+											"oracle",
+											"unknown"
+										]
 									}
 								}
 							]
@@ -5837,13 +6084,47 @@
 							"anyOf": [
 								{
 									"type": "string",
-									"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+									"enum": [
+										"http",
+										"ping",
+										"pagespeed",
+										"hardware",
+										"docker",
+										"port",
+										"game",
+										"grpc",
+										"websocket",
+										"dns",
+										"mysql",
+										"mssql",
+										"postgres",
+										"mongodb",
+										"oracle",
+										"unknown"
+									]
 								},
 								{
 									"type": "array",
 									"items": {
 										"type": "string",
-										"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+										"enum": [
+											"http",
+											"ping",
+											"pagespeed",
+											"hardware",
+											"docker",
+											"port",
+											"game",
+											"grpc",
+											"websocket",
+											"dns",
+											"mysql",
+											"mssql",
+											"postgres",
+											"mongodb",
+											"oracle",
+											"unknown"
+										]
 									}
 								}
 							]
@@ -7069,7 +7350,24 @@
 									},
 									"type": {
 										"type": "string",
-										"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+										"enum": [
+											"http",
+											"ping",
+											"pagespeed",
+											"hardware",
+											"docker",
+											"port",
+											"game",
+											"grpc",
+											"websocket",
+											"dns",
+											"mysql",
+											"mssql",
+											"postgres",
+											"mongodb",
+											"oracle",
+											"unknown"
+										]
 									},
 									"statusWindowSize": {
 										"type": "number",
@@ -7097,6 +7395,21 @@
 									},
 									"port": {
 										"type": "number"
+									},
+									"parentMonitorId": {
+										"anyOf": [
+											{
+												"type": "string",
+												"minLength": 1
+											},
+											{
+												"nullable": true
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
 									},
 									"isActive": {
 										"type": "boolean"
@@ -7245,6 +7558,53 @@
 									"dnsRecordType": {
 										"type": "string",
 										"enum": ["A", "AAAA", "CNAME", "MX", "TXT", "NS"]
+									},
+									"dbName": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbUsername": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbPassword": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbQuery": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbUseSsl": {
+										"type": "boolean"
 									}
 								},
 								"required": ["name", "type", "url"]
@@ -7708,7 +8068,7 @@
 												},
 												"status": {
 													"type": "string",
-													"enum": ["up", "down", "paused", "initializing", "maintenance", "breached"],
+													"enum": ["up", "down", "paused", "initializing", "maintenance", "breached", "degraded"],
 													"default": "initializing"
 												},
 												"statusWindow": {
@@ -7732,7 +8092,24 @@
 												},
 												"type": {
 													"type": "string",
-													"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+													"enum": [
+														"http",
+														"ping",
+														"pagespeed",
+														"hardware",
+														"docker",
+														"port",
+														"game",
+														"grpc",
+														"websocket",
+														"dns",
+														"mysql",
+														"mssql",
+														"postgres",
+														"mongodb",
+														"oracle",
+														"unknown"
+													]
 												},
 												"ignoreTlsErrors": {
 													"type": "boolean",
@@ -7787,6 +8164,21 @@
 												},
 												"port": {
 													"type": "number"
+												},
+												"parentMonitorId": {
+													"anyOf": [
+														{
+															"type": "string",
+															"minLength": 1
+														},
+														{
+															"nullable": true
+														},
+														{
+															"type": "string",
+															"enum": [""]
+														}
+													]
 												},
 												"isActive": {
 													"type": "boolean",
@@ -7925,6 +8317,53 @@
 												"dnsRecordType": {
 													"type": "string",
 													"enum": ["A", "AAAA", "CNAME", "MX", "TXT", "NS"]
+												},
+												"dbName": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "string",
+															"enum": [""]
+														}
+													]
+												},
+												"dbUsername": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "string",
+															"enum": [""]
+														}
+													]
+												},
+												"dbPassword": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "string",
+															"enum": [""]
+														}
+													]
+												},
+												"dbQuery": {
+													"anyOf": [
+														{
+															"type": "string"
+														},
+														{
+															"type": "string",
+															"enum": [""]
+														}
+													]
+												},
+												"dbUseSsl": {
+													"type": "boolean"
 												},
 												"createdAt": {
 													"type": "string"
@@ -8301,7 +8740,24 @@
 									},
 									"type": {
 										"type": "string",
-										"enum": ["http", "ping", "pagespeed", "hardware", "docker", "port", "game", "grpc", "websocket", "dns", "unknown"]
+										"enum": [
+											"http",
+											"ping",
+											"pagespeed",
+											"hardware",
+											"docker",
+											"port",
+											"game",
+											"grpc",
+											"websocket",
+											"dns",
+											"mysql",
+											"mssql",
+											"postgres",
+											"mongodb",
+											"oracle",
+											"unknown"
+										]
 									},
 									"url": {
 										"type": "string"
@@ -8402,6 +8858,21 @@
 										"minimum": 1,
 										"maximum": 65535
 									},
+									"parentMonitorId": {
+										"anyOf": [
+											{
+												"type": "string",
+												"minLength": 1
+											},
+											{
+												"nullable": true
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
 									"cpuAlertThreshold": {
 										"type": "number"
 									},
@@ -8482,6 +8953,53 @@
 									"dnsRecordType": {
 										"type": "string",
 										"enum": ["A", "AAAA", "CNAME", "MX", "TXT", "NS"]
+									},
+									"dbName": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbUsername": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbPassword": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbQuery": {
+										"anyOf": [
+											{
+												"type": "string"
+											},
+											{
+												"type": "string",
+												"enum": [""]
+											}
+										]
+									},
+									"dbUseSsl": {
+										"type": "boolean"
 									}
 								}
 							}

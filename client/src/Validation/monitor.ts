@@ -3,7 +3,6 @@ import type { FieldPath } from "react-hook-form";
 import { GeoContinents } from "@/Types/GeoCheck";
 import {
 	DnsRecordTypes,
-	DatabaseMonitorTypes,
 	HttpMethods,
 	PageSpeedStrategies,
 	type MonitorType,

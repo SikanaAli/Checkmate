@@ -155,6 +155,7 @@ export const statusBadgeKey: Record<MonitorStatus, string> = {
 	up: "pages.statusPages.monitorsList.status.up",
 	down: "pages.statusPages.monitorsList.status.down",
 	breached: "pages.statusPages.monitorsList.status.breached",
+	degraded: "pages.statusPages.monitorsList.status.degraded",
 	maintenance: "pages.statusPages.monitorsList.status.maintenance",
 	paused: "pages.statusPages.monitorsList.status.paused",
 	initializing: "pages.statusPages.monitorsList.status.initializing",

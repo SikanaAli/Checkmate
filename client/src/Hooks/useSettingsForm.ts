@@ -15,6 +15,8 @@ export const useSettingsForm = ({ data = null }: UseSettingsFormOptions = {}) =>
 			systemEmailSecure: data?.systemEmailSecure ?? false,
 			systemEmailPool: data?.systemEmailPool ?? false,
 			showURL: data?.showURL ?? false,
+			persistentNotificationsEnabled: data?.persistentNotificationsEnabled ?? false,
+			persistentNotificationInterval: data?.persistentNotificationInterval ?? 60,
 			appName: data?.appName || "",
 			appLogo: data?.appLogo || "",
 			systemEmailHost: data?.systemEmailHost || "",

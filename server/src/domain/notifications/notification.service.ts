@@ -26,6 +26,8 @@ export interface INotificationsService {
 }
 
 const SERVICE_NAME = "NotificationsService";
+const DEFAULT_PERSISTENT_NOTIFICATION_INTERVAL_MINUTES = 60;
+const PERSISTENT_SETTINGS_CACHE_MS = 30_000;
 
 export class NotificationsService implements INotificationsService {
 	static SERVICE_NAME = SERVICE_NAME;
@@ -36,6 +38,11 @@ export class NotificationsService implements INotificationsService {
 	private settingsService: ISettingsService;
 	private logger: ILogger;
 	private notificationMessageBuilder: INotificationMessageBuilder;
+	private persistentSettingsCache: {
+		enabled: boolean;
+		intervalMinutes: number;
+		expiresAt: number;
+	} | null = null;
 
 	constructor({
 		notificationsRepository,
@@ -59,6 +66,45 @@ export class NotificationsService implements INotificationsService {
 		this.logger = logger;
 		this.notificationMessageBuilder = notificationMessageBuilder;
 	}
+
+	private getPersistentNotificationSettings = async () => {
+		if (this.persistentSettingsCache && this.persistentSettingsCache.expiresAt > Date.now()) {
+			return this.persistentSettingsCache;
+		}
+
+		const settings = await this.settingsService.getDBSettings();
+		this.persistentSettingsCache = {
+			enabled: settings.persistentNotificationsEnabled ?? false,
+			intervalMinutes: settings.persistentNotificationInterval ?? DEFAULT_PERSISTENT_NOTIFICATION_INTERVAL_MINUTES,
+			expiresAt: Date.now() + PERSISTENT_SETTINGS_CACHE_MS,
+		};
+		return this.persistentSettingsCache;
+	};
+
+	private resolveNotificationDecision = async (monitor: Monitor, decision: MonitorActionDecision) => {
+		if (monitor.status !== "down") {
+			return { decision, persistentEnabled: false };
+		}
+
+		const globalSettings = await this.getPersistentNotificationSettings();
+		const persistentEnabled = monitor.persistentNotificationsEnabled ?? globalSettings.enabled;
+		const intervalMinutes = Math.max(1, monitor.persistentNotificationInterval ?? globalSettings.intervalMinutes);
+
+		// A transition into down is always sent immediately. For an ongoing outage,
+		// send again only after the configured interval has elapsed.
+		const isDue =
+			decision.shouldSendNotification ||
+			!monitor.lastPersistentNotificationAt ||
+			Date.now() - monitor.lastPersistentNotificationAt >= intervalMinutes * 60_000;
+
+		return {
+			decision:
+				persistentEnabled && isDue
+					? { ...decision, shouldSendNotification: true, notificationReason: decision.notificationReason ?? "status_change" }
+					: decision,
+			persistentEnabled,
+		};
+	};
 
 	private send = async (
 		notification: Notification,
@@ -115,12 +161,19 @@ export class NotificationsService implements INotificationsService {
 	};
 
 	handleNotifications = async (monitor: Monitor, monitorStatusResponse: MonitorStatusResponse, decision: MonitorActionDecision) => {
-		if (!decision.shouldSendNotification) {
+		const resolved = await this.resolveNotificationDecision(monitor, decision);
+		if (!resolved.decision.shouldSendNotification) {
 			return false;
 		}
 
 		// Send notifications based on decision
-		return await this.sendNotifications(monitor, monitorStatusResponse, decision);
+		const sent = await this.sendNotifications(monitor, monitorStatusResponse, resolved.decision);
+		if (sent && resolved.persistentEnabled && monitor.status === "down" && (monitor.notifications?.length ?? 0) > 0) {
+			const lastPersistentNotificationAt = Date.now();
+			await this.monitorsRepository.updateById(monitor.id, monitor.teamId, { lastPersistentNotificationAt });
+			monitor.lastPersistentNotificationAt = lastPersistentNotificationAt;
+		}
+		return sent;
 	};
 
 	sendTestNotification = async (notification: Partial<Notification>) => {

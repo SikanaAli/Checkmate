@@ -15,6 +15,8 @@ const getBaseDefaults = (data?: Monitor | null) => ({
 	notifications: data?.notifications || [],
 	tags: data?.tags || [],
 	parentMonitorId: data?.parentMonitorId || "",
+	persistentNotificationsEnabled: data?.persistentNotificationsEnabled ?? null,
+	persistentNotificationInterval: data?.persistentNotificationInterval ?? null,
 	statusWindowSize: data?.statusWindowSize || 5,
 	statusWindowThreshold: data?.statusWindowThreshold || 60,
 });

@@ -51,6 +51,8 @@ export const settingsSchema = z.object({
 	systemEmailSecure: z.boolean().optional(),
 	systemEmailPool: z.boolean().optional(),
 	showURL: z.boolean().optional(),
+	persistentNotificationsEnabled: z.boolean(),
+	persistentNotificationInterval: z.number().int().min(1).max(525600),
 	checkTTL: z
 		.number()
 		.int()

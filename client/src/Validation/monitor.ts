@@ -34,6 +34,19 @@ const baseSchema = z.object({
 		.union([z.string(), z.null(), z.literal("")])
 		.optional()
 		.register(monitorStepRegistry, { step: 1 }),
+	persistentNotificationsEnabled: z
+		.boolean()
+		.nullable()
+		.optional()
+		.register(monitorStepRegistry, { step: 1 }),
+	persistentNotificationInterval: z
+		.number()
+		.int()
+		.min(1, "Interval must be at least 1 minute")
+		.max(525600, "Interval must be at most 525600 minutes")
+		.nullable()
+		.optional()
+		.register(monitorStepRegistry, { step: 1 }),
 	statusWindowSize: z
 		.number({ message: "Status window size is required" })
 		.min(1, "Status window size must be at least 1")

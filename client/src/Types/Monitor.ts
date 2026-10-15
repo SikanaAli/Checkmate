@@ -88,6 +88,8 @@ export interface Monitor {
 	parentMonitorId?: string | null;
 	isActive: boolean;
 	interval: number;
+	persistentNotificationsEnabled?: boolean | null;
+	persistentNotificationInterval?: number | null;
 	uptimePercentage?: number;
 	notifications: string[];
 	tags: string[];

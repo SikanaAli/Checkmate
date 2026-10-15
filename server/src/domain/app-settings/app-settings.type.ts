@@ -65,6 +65,8 @@ export interface Settings {
 	ldapAdminGroupDn?: string;
 	ldapRoleMappings?: LdapRoleMapping[];
 	showURL: boolean;
+	persistentNotificationsEnabled: boolean;
+	persistentNotificationInterval: number;
 	singleton: boolean;
 	version: number;
 	globalThresholds?: SettingsThresholds;

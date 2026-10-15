@@ -381,6 +381,14 @@
 					"interval": {
 						"type": "number"
 					},
+					"persistentNotificationsEnabled": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"persistentNotificationInterval": {
+						"type": "number",
+						"nullable": true
+					},
 					"status": {
 						"type": "string",
 						"enum": ["up", "down", "paused", "initializing", "maintenance", "breached", "degraded"]
@@ -7417,6 +7425,16 @@
 									"interval": {
 										"type": "number"
 									},
+									"persistentNotificationsEnabled": {
+										"type": "boolean",
+										"nullable": true
+									},
+									"persistentNotificationInterval": {
+										"type": "integer",
+										"nullable": true,
+										"minimum": 1,
+										"maximum": 525600
+									},
 									"cpuAlertThreshold": {
 										"type": "number"
 									},
@@ -8188,6 +8206,18 @@
 													"type": "number",
 													"default": 60000
 												},
+												"persistentNotificationsEnabled": {
+													"type": "boolean",
+													"nullable": true,
+													"default": null
+												},
+												"persistentNotificationInterval": {
+													"type": "integer",
+													"nullable": true,
+													"minimum": 1,
+													"maximum": 525600,
+													"default": null
+												},
 												"uptimePercentage": {
 													"type": "number"
 												},
@@ -8787,6 +8817,16 @@
 									},
 									"interval": {
 										"type": "number"
+									},
+									"persistentNotificationsEnabled": {
+										"type": "boolean",
+										"nullable": true
+									},
+									"persistentNotificationInterval": {
+										"type": "integer",
+										"nullable": true,
+										"minimum": 1,
+										"maximum": 525600
 									},
 									"notifications": {
 										"type": "array",
@@ -10633,6 +10673,14 @@
 									},
 									"showURL": {
 										"type": "boolean"
+									},
+									"persistentNotificationsEnabled": {
+										"type": "boolean"
+									},
+									"persistentNotificationInterval": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 525600
 									},
 									"systemEmailSecure": {
 										"type": "boolean"

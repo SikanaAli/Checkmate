@@ -25,7 +25,7 @@ import { INotificationsService } from "@/domain/notifications/notification.servi
 import type { Monitor, MonitorsWithChecksByTeamIdResult } from "@/domain/monitors/monitor.types.js";
 
 const sanitizeMonitor = (monitor: Monitor): Monitor => {
-	const { dbPassword, ...sanitized } = monitor;
+	const { dbPassword, lastPersistentNotificationAt, ...sanitized } = monitor;
 	return sanitized as Monitor;
 };
 

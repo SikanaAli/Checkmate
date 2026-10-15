@@ -24,10 +24,15 @@ const createNotificationsRepo = () => ({
 
 const createMonitorsRepo = () => ({
 	removeNotificationFromMonitors: jest.fn(),
+	updateById: jest.fn(),
 });
 
 const createSettingsService = (clientHost = "https://app.example.com") => ({
 	getSettings: jest.fn().mockReturnValue({ clientHost }),
+	getDBSettings: jest.fn().mockResolvedValue({
+		persistentNotificationsEnabled: false,
+		persistentNotificationInterval: 60,
+	}),
 });
 
 const createMessageBuilder = () => ({
@@ -147,6 +152,59 @@ describe("NotificationsService", () => {
 			const { service } = createService();
 			const result = await service.handleNotifications(makeMonitor(), makeStatusResponse(), makeDecision({ shouldSendNotification: false }));
 			expect(result).toBe(false);
+		});
+
+		it("re-notifies an ongoing outage when the global interval is due", async () => {
+			const { service, settingsService, notificationsRepository, emailProvider, monitorsRepository } = createService();
+			settingsService.getDBSettings.mockResolvedValue({
+				persistentNotificationsEnabled: true,
+				persistentNotificationInterval: 5,
+			});
+			(notificationsRepository.findNotificationsByIds as jest.Mock).mockResolvedValue([makeNotification({ type: "email" })]);
+			const monitor = makeMonitor({ status: "down", lastPersistentNotificationAt: Date.now() - 6 * 60_000 });
+
+			const result = await service.handleNotifications(monitor, makeStatusResponse(), makeDecision({ shouldSendNotification: false }));
+
+			expect(result).toBe(true);
+			expect(emailProvider.sendMessage).toHaveBeenCalledTimes(1);
+			expect(monitorsRepository.updateById).toHaveBeenCalledWith("mon-1", "team-1", {
+				lastPersistentNotificationAt: expect.any(Number),
+			});
+		});
+
+		it("does not re-notify before the configured interval", async () => {
+			const { service, settingsService, notificationsRepository, emailProvider } = createService();
+			settingsService.getDBSettings.mockResolvedValue({
+				persistentNotificationsEnabled: true,
+				persistentNotificationInterval: 5,
+			});
+			(notificationsRepository.findNotificationsByIds as jest.Mock).mockResolvedValue([makeNotification({ type: "email" })]);
+			const monitor = makeMonitor({ status: "down", lastPersistentNotificationAt: Date.now() - 4 * 60_000 });
+
+			const result = await service.handleNotifications(monitor, makeStatusResponse(), makeDecision({ shouldSendNotification: false }));
+
+			expect(result).toBe(false);
+			expect(emailProvider.sendMessage).not.toHaveBeenCalled();
+		});
+
+		it("uses the per-monitor override when it differs from the global setting", async () => {
+			const { service, settingsService, notificationsRepository, emailProvider } = createService();
+			settingsService.getDBSettings.mockResolvedValue({
+				persistentNotificationsEnabled: false,
+				persistentNotificationInterval: 60,
+			});
+			(notificationsRepository.findNotificationsByIds as jest.Mock).mockResolvedValue([makeNotification({ type: "email" })]);
+			const monitor = makeMonitor({
+				status: "down",
+				persistentNotificationsEnabled: true,
+				persistentNotificationInterval: 5,
+				lastPersistentNotificationAt: Date.now() - 6 * 60_000,
+			});
+
+			const result = await service.handleNotifications(monitor, makeStatusResponse(), makeDecision({ shouldSendNotification: false }));
+
+			expect(result).toBe(true);
+			expect(emailProvider.sendMessage).toHaveBeenCalledTimes(1);
 		});
 
 		it("sends notifications to all configured providers and returns true", async () => {

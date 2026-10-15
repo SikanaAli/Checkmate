@@ -1244,6 +1244,77 @@ const CreateMonitorPage = () => {
 
 			{showStep(1) && (
 				<ConfigBox
+					title={t("pages.createMonitor.form.persistentNotifications.title")}
+					subtitle={t("pages.createMonitor.form.persistentNotifications.description")}
+					rightContent={
+						<Stack spacing={theme.spacing(LAYOUT.MD)}>
+							<Controller
+								name="persistentNotificationsEnabled"
+								control={control}
+								render={({ field }) => (
+									<Select
+										value={
+											field.value === null || field.value === undefined
+												? "inherit"
+												: field.value
+													? "enabled"
+													: "disabled"
+										}
+										fieldLabel={t(
+											"pages.createMonitor.form.persistentNotifications.option.mode.label"
+										)}
+										onChange={(event) => {
+											const value = event.target.value;
+											field.onChange(value === "inherit" ? null : value === "enabled");
+											if (value !== "enabled") {
+												setValue("persistentNotificationInterval", null);
+											}
+										}}
+									>
+										<MenuItem value="inherit">
+											{t(
+												"pages.createMonitor.form.persistentNotifications.option.mode.inherit"
+											)}
+										</MenuItem>
+										<MenuItem value="enabled">
+											{t(
+												"pages.createMonitor.form.persistentNotifications.option.mode.enabled"
+											)}
+										</MenuItem>
+										<MenuItem value="disabled">
+											{t(
+												"pages.createMonitor.form.persistentNotifications.option.mode.disabled"
+											)}
+										</MenuItem>
+									</Select>
+								)}
+							/>
+							{watch("persistentNotificationsEnabled") === true && (
+								<Controller
+									name="persistentNotificationInterval"
+									control={control}
+									render={({ field, fieldState }) => (
+										<TextField
+											{...field}
+											value={field.value ?? 60}
+											type="number"
+											fieldLabel={t(
+												"pages.createMonitor.form.persistentNotifications.option.interval.label"
+											)}
+											onChange={(event) => field.onChange(Number(event.target.value))}
+											error={!!fieldState.error}
+											helperText={fieldState.error?.message}
+										/>
+									)}
+								/>
+							)}
+						</Stack>
+					}
+				/>
+			)}
+
+			{showStep(1) && (
+				<ConfigBox
 					title={t("pages.createMonitor.form.tags.title")}
 					subtitle={t("pages.createMonitor.form.tags.description")}
 					rightContent={

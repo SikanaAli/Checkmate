@@ -41,6 +41,8 @@ export const updateAppSettingsBodyValidation = z
 		systemEmailTLSServername: z.string().nullable().optional(),
 
 		showURL: z.boolean().optional(),
+		persistentNotificationsEnabled: z.boolean().optional(),
+		persistentNotificationInterval: z.number().int().min(1).max(525600).optional(),
 		systemEmailSecure: z.boolean().optional(),
 		systemEmailPool: z.boolean().optional(),
 		systemEmailIgnoreTLS: z.boolean().optional(),

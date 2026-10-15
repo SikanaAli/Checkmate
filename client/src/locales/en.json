@@ -701,6 +701,21 @@
 					"description": "Select the notification channels you want to use",
 					"title": "Notifications"
 				},
+				"persistentNotifications": {
+					"description": "Choose whether this monitor should send reminders while it remains down. The global setting can be overridden here.",
+					"title": "Persistent notifications",
+					"option": {
+						"mode": {
+							"label": "Persistent notification mode",
+							"inherit": "Use global setting",
+							"enabled": "Enabled",
+							"disabled": "Disabled"
+						},
+						"interval": {
+							"label": "Repeat interval (minutes)"
+						}
+					}
+				},
 				"tags": {
 					"description": "Select the tags you want to apply to this monitor",
 					"title": "Tags"
@@ -1452,6 +1467,18 @@
 						"temperature": {
 							"label": "Temperature Threshold (°C)",
 							"placeholder": "1 - 150"
+						}
+					}
+				},
+				"persistentNotifications": {
+					"title": "Persistent notifications",
+					"description": "Enable reminder notifications for monitors that remain down. Individual monitors can override this global default.",
+					"option": {
+						"enabled": {
+							"label": "Enable persistent notifications by default"
+						},
+						"interval": {
+							"label": "Default repeat interval (minutes)"
 						}
 					}
 				},

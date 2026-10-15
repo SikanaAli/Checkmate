@@ -36,6 +36,8 @@ class MongoSettingsRepository implements ISettingsRepository {
 			ldapAdminGroupDn: doc.ldapAdminGroupDn ?? undefined,
 			ldapRoleMappings: doc.ldapRoleMappings ?? [],
 			showURL: doc.showURL ?? false,
+			persistentNotificationsEnabled: doc.persistentNotificationsEnabled ?? false,
+			persistentNotificationInterval: doc.persistentNotificationInterval ?? 60,
 			singleton: doc.singleton,
 			version: doc.version ?? 1,
 			globalThresholds: doc.globalThresholds ?? undefined,

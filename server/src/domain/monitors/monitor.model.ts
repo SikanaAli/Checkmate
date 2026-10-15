@@ -287,6 +287,20 @@ const MonitorSchema = new Schema<MonitorDocument>(
 			type: Number,
 			default: 60000,
 		},
+		persistentNotificationsEnabled: {
+			type: Boolean,
+			default: null,
+		},
+		persistentNotificationInterval: {
+			type: Number,
+			min: 1,
+			max: 525600,
+			default: null,
+		},
+		lastPersistentNotificationAt: {
+			type: Number,
+			default: null,
+		},
 		uptimePercentage: {
 			type: Number,
 			default: undefined,

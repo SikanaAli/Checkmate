@@ -56,6 +56,8 @@ const AppSettingsSchema = new Schema<AppSettingsDocument>(
 		ldapAdminGroupDn: { type: String },
 		ldapRoleMappings: { type: [ldapRoleMappingSchema], default: [] },
 		showURL: { type: Boolean, default: false },
+		persistentNotificationsEnabled: { type: Boolean, default: false },
+		persistentNotificationInterval: { type: Number, default: 60 },
 		singleton: { type: Boolean, required: true, unique: true, default: true },
 		version: { type: Number, default: 1 },
 		globalThresholds: { type: thresholdsSchema },

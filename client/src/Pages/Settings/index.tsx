@@ -779,6 +779,56 @@ export const SettingsPage = () => {
 						}
 					/>
 				)}
+
+				{/* Persistent Notifications */}
+				{isAdmin && (
+					<SettingsSection
+						title={t("pages.settings.form.persistentNotifications.title")}
+						subtitle={t("pages.settings.form.persistentNotifications.description")}
+						rightContent={
+							<Stack spacing={2}>
+								<Controller
+									name="persistentNotificationsEnabled"
+									control={form.control}
+									render={({ field }) => (
+										<Box
+											display="flex"
+											alignItems="center"
+											justifyContent="space-between"
+										>
+											<Typography>
+												{t(
+													"pages.settings.form.persistentNotifications.option.enabled.label"
+												)}
+											</Typography>
+											<SwitchComponent
+												checked={field.value ?? false}
+												onChange={(event) => field.onChange(event.target.checked)}
+											/>
+										</Box>
+									)}
+								/>
+								<Controller
+									name="persistentNotificationInterval"
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<TextField
+											{...field}
+											value={field.value ?? 60}
+											type="number"
+											fieldLabel={t(
+												"pages.settings.form.persistentNotifications.option.interval.label"
+											)}
+											onChange={(event) => field.onChange(Number(event.target.value))}
+											error={!!fieldState.error}
+											helperText={fieldState.error?.message}
+										/>
+									)}
+								/>
+							</Stack>
+						}
+					/>
+				)}
 			</Stack>
 
 			{/* Email Settings - Admin Only */}
